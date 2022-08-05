@@ -2,6 +2,7 @@
 #include "CommonTypes.h"
 #include "BUS.h"
 #include <variant>
+#include <bitset>
 
 //Implementation of the 6502 8-Bit CPU
 //Source: Technical overview "https://en.wikipedia.org/wiki/MOS_Technology_6502"
@@ -37,6 +38,8 @@ private:
 		std::variant<ubyte&(CPU_6052::*)(ubyte&), ubyte2(CPU_6052::*)(ubyte&)> Data;
 		ubyte numCycles;
 	};
+
+	BUS& Bus;
 
 	using c = CPU_6052;
 	//Function pointer array indexed by hex opcode - source: opcode matrix -> "http://archive.6502.org/datasheets/rockwell_r650x_r651x.pdf"
@@ -349,6 +352,20 @@ private:
 		Status ^= flag;
 	}
 
+	void SetFlagTo(Flag flag, bool condition)
+	{
+		if (condition)
+			SetFlag(flag);
+		else
+			RemoveFlag(flag);
+	}
+
+	//get most significant bit
+	bool GetMSB(ubyte data)
+	{
+		return (data >> 7);
+	}
+
 	//Read byte from 16-bit address
 	ubyte& Read(ubyte2 index);
 
@@ -356,6 +373,7 @@ private:
 	void Write(ubyte val, ubyte2 index);
 
 	/* Addressing Mode Functions */
+	//Source: "https://www.middle-engine.com/blog/posts/2020/06/23/programming-the-nes-the-6502-in-detail"
 	//All of these assume that when they're invoked, program counter is still pointing to the opcode
 	//for convenience raw data is stored as unsigned bytes however the representation used in the data 
 	//is not reflective of the type assigned to it. The data returned as ubytes will probably actually be signed 2'complement
@@ -376,7 +394,7 @@ private:
 	ubyte2 ERR(ubyte&);//Handle cases where an invalid opcode is called
 
 	/*Instructions*/
-	//Source: "https://csh.rit.edu/~moffitt/docs/6502.html#DETAIL"
+	//Source: "https://www.middle-engine.com/blog/posts/2020/06/23/programming-the-nes-the-6502-in-detail"
 
 	//Add Memory to A with Carry
 	void ADC(ubyte& data);
@@ -404,7 +422,7 @@ private:
 	void BVC(ubyte2 address);
 	//Branch iff P.V is SET
 	void BVS(ubyte2 address);
-	//Branch iff P.V is CLEAR
+	//Clear Carry Flag
 	void CLC(ubyte& data);
 	//Clear Decimal Flag(P.D)
 	void CLD(ubyte& data);
@@ -466,13 +484,13 @@ private:
 	void RTS(ubyte& data);
 	//Subtract Memory from A with Borrow
 	void SBC(ubyte& data);
-	//Subtract Memory from A with Borrow
+	//Set Carry Flag
 	void SEC(ubyte& data);
 	//Set Binary Coded Decimal Flag (P.D)
 	void SED(ubyte& data);
 	//Set Interrupt (disable) Flag (P.I)
 	void SEI(ubyte& data);
-	//Set Interrupt (disable) Flag (P.I)
+	//Store Accumulator In Memory
 	void STA(ubyte& data);
 	//Store X in Memory
 	void STX(ubyte& data);
