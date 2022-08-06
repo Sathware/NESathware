@@ -8,6 +8,8 @@ int main()
 	BUS bus;
 	CPU_6052 Cpu(bus);
 
+	Cpu.Execute();
+
 	//ubyte Accumulator = 0xfe;
 	//ubyte data = 0x01;
 	//bool Carry = 1;

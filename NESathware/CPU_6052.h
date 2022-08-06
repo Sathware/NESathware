@@ -10,6 +10,10 @@
 //Programming reference: "http://archive.6502.org/datasheets/synertek_programming_manual.pdf"
 class CPU_6052
 {
+	using JumpOperation = void(CPU_6052::*)(ubyte2, ubyte&);
+	using Operation = void(CPU_6052::*)(ubyte&, ubyte&);
+	using OperandAddress = ubyte2(CPU_6052::*)(ubyte&);
+	using OperandByte = ubyte&(CPU_6052::*)(ubyte&);
 public:
 	CPU_6052(BUS& bus)
 		:Bus(bus),
@@ -21,6 +25,40 @@ public:
 		Status(0)
 	{
 		Reset();//Initialize CPU, simulates startup sequence
+	}
+
+	//Execute current instruction and move to next instruction
+	//return number of cycles to wait for executed instruction to complete
+	ubyte Execute()
+	{
+		ubyte opcode = GetData(ProgramCounter);
+		const Instruction& instruction = Instructions[opcode];
+		ubyte deltaCycles = 0;
+
+		if (std::holds_alternative<JumpOperation>(instruction.Operation))
+		{
+			auto dataFunc = std::get<OperandAddress>(instruction.Data);//get addressing mode
+			auto jumpoperation = std::get<JumpOperation>(instruction.Operation);//get operation
+
+			byte2 address = (this->*dataFunc)(deltaCycles);//get change in cycles depending on whether page boundary was crossed or not
+
+			(this->*jumpoperation)(address, deltaCycles);//update based on function
+		}
+		else if (std::get<Operation>(instruction.Operation) == &CPU_6052::NUL)
+		{
+			throw std::runtime_error("Invalid Opcode!");
+		}
+		else
+		{
+			auto dataFunc = std::get<OperandByte>(instruction.Data);//get addressing mode
+			auto operation = std::get<Operation>(instruction.Operation);
+
+			ubyte& data = (this->*dataFunc)(deltaCycles);//get change in cycles depending on whether page boundary was crossed or not
+
+			(this->*operation)(data, deltaCycles);//update based on function
+		}
+
+		return instruction.baseCycles + deltaCycles;
 	}
 private:
 	//THIS CPU IS LITTLE ENDIAN
@@ -44,7 +82,7 @@ private:
 		ProgramCounter = (programCounterHigh << 8) | programCounterLow;//combine
 	}
 
-	//Interrupt function for simulating Interrupts and non maskable interrupts
+	//Interrupt function for simulating Interrupts and non maskable interrupts as per specification
 	void Interrupt(bool unmaskable)
 	{
 		if (unmaskable)
@@ -87,8 +125,8 @@ private:
 	struct Instruction
 	{
 		char Name[4];
-		std::variant<void(CPU_6052::*)(ubyte&,ubyte&),void(CPU_6052::*)(ubyte2,ubyte&)> Operation;
-		std::variant<ubyte&(CPU_6052::*)(ubyte&), ubyte2(CPU_6052::*)(ubyte&)> Data;
+		std::variant<Operation, JumpOperation> Operation;
+		std::variant<OperandByte, OperandAddress> Data;
 		ubyte baseCycles;
 	};
 
@@ -417,7 +455,7 @@ private:
 		return (data & (1 << bit)) != 0;
 	}
 
-	//get most significant bit, or sign bit if two's complement
+	//get most significant bit, or sign bit if two's complement of the byte
 	bool GetMSB(ubyte data)
 	{
 		return (data >> 7);
@@ -448,20 +486,20 @@ private:
 	//All of these assume that when they're invoked, program counter is still pointing to the opcode
 	//for convenience raw data is stored as unsigned bytes however the representation used in the data 
 	//is not reflective of the type assigned to it. The data returned as ubytes will probably actually be signed 2'complement
-	ubyte& ACA(ubyte& deltaCycles);//Accumulator Addressing
-	ubyte& IMM(ubyte& deltaCycles);//Immediate Address
-	ubyte& ABS(ubyte& deltaCycles);//Absolute Addressing
-	ubyte& ZPA(ubyte& deltaCycles);//Zero Page Addressing
-	ubyte& ZPX(ubyte& deltaCycles);//Indexed Zero Page Addressing X
-	ubyte& ZPY(ubyte& deltaCycles);//Indexed Zero Page Addressing Y
-	ubyte& IAX(ubyte& deltaCycles);//Indexed Absolute Addressing X
-	ubyte& IAY(ubyte& deltaCycles);//Indexed Absolute Addressing Y
-	ubyte& IMP(ubyte& deltaCycles);//Implied Addressing
-	ubyte2 REL(ubyte& deltaCycles);//Relative Addressing return absolute address to jump to if condition passes, used exclusively by branch instructions
-	ubyte& IIX(ubyte& deltaCycles);//Indexed Indirect Addressing
-	ubyte& IIY(ubyte& deltaCycles);//Indirect Indexed Addressing
-	ubyte2 ABI(ubyte& deltaCycles);//Absolute Indirect
-	ubyte2 ABJ(ubyte& deltaCycles);//Special Addressing Mode for JMP/JSR that take in 16-bit input absolute address
+	ubyte& ACA(ubyte& dummy);//Accumulator Addressing
+	ubyte& IMM(ubyte& dummy);//Immediate Address
+	ubyte& ABS(ubyte& dummy);//Absolute Addressing
+	ubyte& ZPA(ubyte& dummy);//Zero Page Addressing
+	ubyte& ZPX(ubyte& dummy);//Indexed Zero Page Addressing X
+	ubyte& ZPY(ubyte& dummy);//Indexed Zero Page Addressing Y
+	ubyte& IAX(ubyte& deltaCycles);//Indexed Absolute Addressing X, affects deltaCycles
+	ubyte& IAY(ubyte& deltaCycles);//Indexed Absolute Addressing Y, affects deltaCycles
+	ubyte& IMP(ubyte& dummy);//Implied Addressing
+	ubyte2 REL(ubyte& deltaCycles);//Relative Addressing return absolute address to jump to if condition passes, used exclusively by branch instructions, affects deltaCycles
+	ubyte& IIX(ubyte& dummy);//Indexed Indirect Addressing
+	ubyte& IIY(ubyte& deltaCycles);//Indirect Indexed Addressing, affects deltaCycles
+	ubyte2 ABI(ubyte& dummy);//Absolute Indirect
+	ubyte2 ABJ(ubyte& dummy);//Special Addressing Mode for JMP/JSR that take in 16-bit input absolute address
 	ubyte2 ERR(ubyte& deltaCycles);//Handle cases where an invalid opcode is called
 
 	/*Instructions*/

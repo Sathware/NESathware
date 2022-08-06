@@ -13,13 +13,13 @@ void CPU_6052::SetData(ubyte val, ubyte2 index)
 
 /* Implementation of Addressing Modes */
 
-ubyte& CPU_6052::ACA(ubyte& cycles)
+ubyte& CPU_6052::ACA(ubyte& deltaCycles)
 {
 	++ProgramCounter;//Point to next instruction in program
 	return Accumulator;
 }
 
-ubyte& CPU_6052::IMM(ubyte& cycles)
+ubyte& CPU_6052::IMM(ubyte& deltaCycles)
 {
 	++ProgramCounter;
 	ubyte& temp = GetData(ProgramCounter);//Get operand byte immediately proceeding instruction
@@ -27,7 +27,7 @@ ubyte& CPU_6052::IMM(ubyte& cycles)
 	return temp;
 }
 
-ubyte& CPU_6052::ABS(ubyte& cycles)
+ubyte& CPU_6052::ABS(ubyte& deltaCycles)
 {
 	++ProgramCounter;
 	ubyte2 low = GetData(ProgramCounter);//get 1st operand byte immediately proceeding instruction byte
@@ -39,7 +39,7 @@ ubyte& CPU_6052::ABS(ubyte& cycles)
 	return GetData(address);
 }
 
-ubyte& CPU_6052::ZPA(ubyte& cycles)
+ubyte& CPU_6052::ZPA(ubyte& deltaCycles)
 {
 	++ProgramCounter;
 	ubyte2 address = GetData(ProgramCounter);//higher order bits are assumed to be zero in zero page addressing
@@ -48,7 +48,7 @@ ubyte& CPU_6052::ZPA(ubyte& cycles)
 	return GetData(address);
 }
 
-ubyte& CPU_6052::ZPX(ubyte& cycles)
+ubyte& CPU_6052::ZPX(ubyte& deltaCycles)
 {
 	++ProgramCounter;
 	ubyte2 address = GetData(ProgramCounter);
@@ -58,7 +58,7 @@ ubyte& CPU_6052::ZPX(ubyte& cycles)
 	return GetData(address);
 }
 
-ubyte& CPU_6052::ZPY(ubyte& cycles)
+ubyte& CPU_6052::ZPY(ubyte& deltaCycles)
 {
 	++ProgramCounter;
 	ubyte2 address = GetData(ProgramCounter);
@@ -68,7 +68,7 @@ ubyte& CPU_6052::ZPY(ubyte& cycles)
 	return GetData(address);
 }
 
-ubyte& CPU_6052::IAX(ubyte& cycles)
+ubyte& CPU_6052::IAX(ubyte& deltaCycles)
 {
 	++ProgramCounter;
 	ubyte2 low = GetData(ProgramCounter);//get 1st operand byte immediately proceeding instruction byte
@@ -76,12 +76,14 @@ ubyte& CPU_6052::IAX(ubyte& cycles)
 	ubyte2 high = GetData(ProgramCounter);//get 2nd operand byte
 	++ProgramCounter;
 	ubyte2 address = (high << 8) | low;//combine low and high order bits to form full 16-bit address
-	address += X_Register;//Like absolute but X_Register is added as offset
+	
+	if (High(address) != High(address + X_Register))
+		++deltaCycles;//Increase cycle count if page boundary is crossed
 
-	return GetData(address);
+	return GetData(address + X_Register);//Like absolute but X_Register is added as offset
 }
 
-ubyte& CPU_6052::IAY(ubyte& cycles)
+ubyte& CPU_6052::IAY(ubyte& deltaCycles)
 {
 	++ProgramCounter;
 	ubyte2 low = GetData(ProgramCounter);//get 1st operand byte immediately proceeding instruction byte
@@ -89,61 +91,66 @@ ubyte& CPU_6052::IAY(ubyte& cycles)
 	ubyte2 high = GetData(ProgramCounter);//get 2nd operand byte
 	++ProgramCounter;
 	ubyte2 address = (high << 8) | low;//combine low and high order bits to form full 16-bit 
-	address += Y_Register;//Like absolute but Y_Register is added as offset
 
-	return GetData(address);
+	if (High(address) != High(address + Y_Register))
+		++deltaCycles;//Increase cycle count if page boundary is crossed
+
+	return GetData(address + Y_Register);//Like absolute but Y_Register is added as offset
 }
 
-ubyte& CPU_6052::IMP(ubyte& cycles)
+ubyte& CPU_6052::IMP(ubyte& deltaCycles)
 {
 	++ProgramCounter;
 	return Status;//Dummy output, SHOULD NEVER BE USED for implied
 }
 
-ubyte2 CPU_6052::REL(ubyte& cycles)
+ubyte2 CPU_6052::REL(ubyte& deltaCycles)
 {
 	++ProgramCounter;
-	ubyte offset = GetData(ProgramCounter);//offset is a signed 2's complement byte (-128 to 127)
+	ubyte2 offset = GetData(ProgramCounter);//offset is a signed 2's complement byte (-128 to 127)
 	++ProgramCounter;//Point to next instruction
 
-	if (GetMSB(offset))//if offset is negative the most significant digit will be 1
-	{
-		offset = ~offset + 1;//Convert from 2's complement to unsigned representation
-		return ProgramCounter - offset;
-	}
-	else
-		return ProgramCounter + offset;
+	if (isBitOn<7>(offset))//if offset is negative the most significant digit will be 1
+		offset |= 0xff00;//preserve 2's complement representation
+
+
+	if (High(ProgramCounter) != High(ProgramCounter + offset))
+			++deltaCycles;
+
+	return ProgramCounter + offset;
 }
 
-ubyte& CPU_6052::IIX(ubyte& cycles)
+ubyte& CPU_6052::IIX(ubyte& deltaCycles)
 {
 	++ProgramCounter;
 	ubyte pAddress = GetData(ProgramCounter);
 	++ProgramCounter;
-	pAddress += X_Register;//Carry/Overflow is disregarded as per specification, value must be within zero page
+	pAddress += X_Register;//Carry/Overflow is disregarded as per specification, value must be within zero page, which is automatically handled by unsigned arithmetic
 
 	ubyte2 addressLow = GetData(pAddress);//Some address in page zero
-	ubyte2 addressHigh = GetData(pAddress + 1);//The next address in page zero
-	ubyte2 address = (addressHigh << 8) | addressLow;
+	ubyte2 addressHigh = GetData(pAddress + 1u);//The next address in page zero, or wraps around to beginning of page zero which is automatically handled by unsigned arithmetic
+	ubyte2 address = (addressHigh << 8u) | addressLow;
 
 	return GetData(address);
 }
 
-ubyte& CPU_6052::IIY(ubyte& cycles)
+ubyte& CPU_6052::IIY(ubyte& deltaCycles)
 {
 	++ProgramCounter;
 	ubyte2 pAddress = GetData(ProgramCounter);
 	++ProgramCounter;
 
-	ubyte2 addressLow = GetData(pAddress);//Don't take into account carry of the addition between pAddress and Y_Register
-	ubyte2 addressHigh = GetData(pAddress + 1);
+	ubyte2 addressLow = GetData(pAddress);
+	ubyte2 addressHigh = GetData(pAddress + 1u);
 	ubyte2 address = (addressHigh << 8) | addressLow;
-	address += Y_Register;//Add Y_Register as offset
 
-	return GetData(address);
+	if (High(address) != High(address + Y_Register))
+		++deltaCycles;//Increase cycle count if page boundary is crossed
+
+	return GetData(address + Y_Register);//Add Y_Register as offset
 }
 
-ubyte2 CPU_6052::ABI(ubyte& cycles)
+ubyte2 CPU_6052::ABI(ubyte& deltaCycles)
 {
 	++ProgramCounter;
 	ubyte2 pAddressLow = GetData(ProgramCounter);
@@ -161,7 +168,7 @@ ubyte2 CPU_6052::ABI(ubyte& cycles)
 	return address;//Dummy return
 }
 
-ubyte2 CPU_6052::ABJ(ubyte& cycles)
+ubyte2 CPU_6052::ABJ(ubyte& deltaCycles)
 {
 	++ProgramCounter;
 	ubyte2 low = GetData(ProgramCounter);//get 1st operand byte immediately proceeding instruction byte
@@ -240,6 +247,7 @@ void CPU_6052::LDY(ubyte& data, ubyte& deltaCycles)
 void CPU_6052::STA(ubyte& data, ubyte& deltaCycles)
 {
 	data = Accumulator;
+	deltaCycles = 0;
 }
 
 void CPU_6052::STX(ubyte& data, ubyte& deltaCycles)
@@ -381,6 +389,7 @@ void CPU_6052::DEY(ubyte& dummy, ubyte& deltaCycles)
 void CPU_6052::INC(ubyte& data, ubyte& deltaCycles)
 {
 	++data;
+	deltaCycles = 0;
 
 	SetFlagTo(Negative, GetMSB(data));
 	SetFlagTo(Zero, data == 0);
@@ -389,6 +398,7 @@ void CPU_6052::INC(ubyte& data, ubyte& deltaCycles)
 void CPU_6052::DEC(ubyte& data, ubyte& deltaCycles)
 {
 	--data;
+	deltaCycles = 0;
 
 	SetFlagTo(Negative, GetMSB(data));
 	SetFlagTo(Zero, data == 0);
@@ -432,10 +442,14 @@ void CPU_6052::LSR(ubyte& data, ubyte& deltaCycles)
 	data = data >> 1;
 	SetFlagTo(Zero, data == 0);
 	RemoveFlag(Negative);
+
+	deltaCycles = 0;
 }
 
 void CPU_6052::ASL(ubyte& data, ubyte& deltaCycles)
 {
+	deltaCycles = 0;//ASL does not change cycle count if page boundary is crossed
+
 	SetFlagTo(Carry, GetMSB(data));
 	data = data << 1;
 	SetFlagTo(Negative, GetMSB(data));
@@ -450,6 +464,8 @@ void CPU_6052::ROL(ubyte& data, ubyte& deltaCycles)
 	data |= new0bit;
 	SetFlagTo(Zero, data == 0);
 	SetFlagTo(Negative, GetMSB(data));
+
+	deltaCycles = 0;
 }
 
 void CPU_6052::ROR(ubyte& data, ubyte& deltaCycles)
@@ -460,6 +476,8 @@ void CPU_6052::ROR(ubyte& data, ubyte& deltaCycles)
 	data |= new7bit;
 	SetFlagTo(Zero, data == 0);
 	SetFlagTo(Negative, GetMSB(data));
+
+	deltaCycles = 0;
 }
 
 void CPU_6052::JMP(ubyte2 address, ubyte& deltaCycles)
@@ -470,49 +488,81 @@ void CPU_6052::JMP(ubyte2 address, ubyte& deltaCycles)
 void CPU_6052::BMI(ubyte2 address, ubyte& deltaCycles)
 {
 	if (IsSet(Negative))
+	{
+		++deltaCycles;
 		ProgramCounter = address;
+	}
+	deltaCycles = 0;
 }
 
 void CPU_6052::BPL(ubyte2 address, ubyte& deltaCycles)
 {
 	if (!IsSet(Negative))
+	{
+		++deltaCycles;
 		ProgramCounter = address;
+	}
+	deltaCycles = 0;
 }
 
 void CPU_6052::BVS(ubyte2 address, ubyte& deltaCycles)
 {
 	if (IsSet(Overflow))
+	{
+		++deltaCycles;
 		ProgramCounter = address;
+	}
+	deltaCycles = 0;
 }
 
 void CPU_6052::BVC(ubyte2 address, ubyte& deltaCycles)
 {
 	if (!IsSet(Overflow))
+	{
+		++deltaCycles;
 		ProgramCounter = address;
+	}
+	deltaCycles = 0;
 }
 
 void CPU_6052::BCS(ubyte2 address, ubyte& deltaCycles)
 {
 	if (IsSet(Carry))
+	{
+		++deltaCycles;
 		ProgramCounter = address;
+	}
+	deltaCycles = 0;
 }
 
 void CPU_6052::BCC(ubyte2 address, ubyte& deltaCycles)
 {
 	if (!IsSet(Carry))
+	{
+		++deltaCycles;
 		ProgramCounter = address;
+	}
+	deltaCycles = 0;
 }
 
 void CPU_6052::BEQ(ubyte2 address, ubyte& deltaCycles)
 {
 	if (IsSet(Zero))
+	{
+		++deltaCycles;
 		ProgramCounter = address;
+	}
+	deltaCycles = 0;
 }
 
 void CPU_6052::BNE(ubyte2 address, ubyte& deltaCycles)
 {
 	if (!IsSet(Zero))
+	{
+		++deltaCycles;
 		ProgramCounter = address;
+	}
+	deltaCycles = 0;
 }
 
 void CPU_6052::JSR(ubyte2 address, ubyte& deltaCycles)

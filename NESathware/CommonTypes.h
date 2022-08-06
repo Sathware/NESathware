@@ -1,4 +1,5 @@
 #pragma once
+#include <stdexcept>
 
 typedef __int8 byte;
 typedef __int16 byte2;
