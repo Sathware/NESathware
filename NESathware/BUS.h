@@ -7,6 +7,6 @@ class BUS
 {
 public:
 	//2KB onboard ram
-	std::array<ubyte, 0xffff> RAM = { 0 };
+	std::array<ubyte, 65536> RAM = { 0 };
 };
 
