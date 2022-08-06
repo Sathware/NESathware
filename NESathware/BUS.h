@@ -1,11 +1,12 @@
 #pragma once
 #include "CommonTypes.h"
+#include <array>
 
 //Handles inter-component communication
 class BUS
 {
 public:
 	//2KB onboard ram
-	ubyte RAM[2048];
+	std::array<ubyte, 0xffff> RAM = { 0 };
 };
 

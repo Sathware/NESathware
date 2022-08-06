@@ -7,39 +7,90 @@
 //Implementation of the 6502 8-Bit CPU
 //Source: Technical overview "https://en.wikipedia.org/wiki/MOS_Technology_6502"
 //More Technical Overview "https://ia803008.us.archive.org/9/items/mos_6500_mpu_preliminary_may_1976/mos_6500_mpu_preliminary_may_1976.pdf"
+//Programming reference: "http://archive.6502.org/datasheets/synertek_programming_manual.pdf"
 class CPU_6052
 {
+public:
+	CPU_6052(BUS& bus)
+		:Bus(bus),
+		Accumulator(0),
+		Y_Register(0),
+		X_Register(0),
+		ProgramCounter(0),
+		StackPointer(0),
+		Status(0)
+	{
+		Reset();//Initialize CPU, simulates startup sequence
+	}
 private:
 	//THIS CPU IS LITTLE ENDIAN
+
+	BUS& Bus;
 
 	ubyte Accumulator;//Accumulator register
 	ubyte Y_Register;//Index register
 	ubyte X_Register;//Index register
-	ubyte2 ProgramCounter;//Program Counter
-	ubyte StackPointer;//Stack Pointer
+	ubyte2 ProgramCounter;//Program Counter, always points to next instruction to be executed
+	ubyte StackPointer;//Stack Pointer, always points to the next available memory slot
 	ubyte Status;//Flags
+
+	//Initializes the CPU to begin Program execution as per specification
+	//Only initializes the ProgramCounter and sets InterruptDisable flag
+	void Reset()
+	{
+		SetFlag(InterruptDisable);
+		ubyte2 programCounterLow = GetData(0xfffc);
+		ubyte2 programCounterHigh = GetData(0xfffd);
+		ProgramCounter = (programCounterHigh << 8) | programCounterLow;//combine
+	}
+
+	//Interrupt function for simulating Interrupts and non maskable interrupts
+	void Interrupt(bool unmaskable)
+	{
+		if (unmaskable)
+		{
+			//unmaskable interrupt handlers are stored in another address
+			//and are not affected by Interrupt disable flag
+			PushOntoStack(High(ProgramCounter));
+			PushOntoStack(Low(ProgramCounter));
+			PushOntoStack(Status | Break);
+			ubyte2 pInterruptHandlerLow = GetData(0xfffa);
+			ubyte2 pInterruptHandlerHigh = GetData(0xfffb);
+			ubyte2 pInterruptHandler = (pInterruptHandlerHigh << 8) | pInterruptHandlerLow;
+			ProgramCounter = pInterruptHandler;
+		}
+		else if (!IsSet(InterruptDisable))
+		{
+			PushOntoStack(High(ProgramCounter));
+			PushOntoStack(Low(ProgramCounter));
+			PushOntoStack(Status | Break);
+			ubyte2 pInterruptHandlerLow = GetData(0xfffe);
+			ubyte2 pInterruptHandlerHigh = GetData(0xffff);
+			ubyte2 pInterruptHandler = (pInterruptHandlerHigh << 8) | pInterruptHandlerLow;
+			ProgramCounter = pInterruptHandler;
+		}
+		//Ignore if interrupt disable is set and a normal interrupt is recieved
+	}
 
 	enum Flag : ubyte
 	{
-		Carry = 0b00000001,
-		Zero = 0b00000010,
+		Carry =            0b00000001,
+		Zero =             0b00000010,
 		InterruptDisable = 0b00000100,
-		Decimal = 0b00001000,//Decimal NOT AVAILABLE IN NES VERSION OF 6502
-		Break = 0b00010000,
-		Reserved = 0b00100000,//Reserved (BLANK - NEVER USED)
-		Overflow = 0b01000000,
-		Negative = 0b10000000
+		Decimal =          0b00001000,//Decimal NOT AVAILABLE IN NES VERSION OF 6502
+		Break =            0b00010000,
+		Reserved =         0b00100000,//Reserved (BLANK - NEVER USED)
+		Overflow =         0b01000000,
+		Negative =         0b10000000
 	};
 
 	struct Instruction
 	{
 		char Name[4];
-		std::variant<void(CPU_6052::*)(ubyte&),void(CPU_6052::*)(ubyte2)> Operation;
+		std::variant<void(CPU_6052::*)(ubyte&,ubyte&),void(CPU_6052::*)(ubyte2,ubyte&)> Operation;
 		std::variant<ubyte&(CPU_6052::*)(ubyte&), ubyte2(CPU_6052::*)(ubyte&)> Data;
-		ubyte numCycles;
+		ubyte baseCycles;
 	};
-
-	BUS& Bus;
 
 	using c = CPU_6052;
 	//Function pointer array indexed by hex opcode - source: opcode matrix -> "http://archive.6502.org/datasheets/rockwell_r650x_r651x.pdf"
@@ -320,16 +371,16 @@ private:
 
 	/* Helper Functions */
 
-//Return lower 4 bits of byte e.g. Low(0xAB) = 0x0B
-	ubyte Low(ubyte val)
+//Return lower byte of byte2 e.g. Low(0xAABB) = 0xBB
+	ubyte Low(ubyte2 val)
 	{
-		return (val & 0x0F);
+		return (ubyte)(val & 0x00FF);
 	}
 
-	//Return higher 4 bits byte e.g. High(0xAB) = 0x0A
-	ubyte High(ubyte val)
+	//Return higher byte byte2 e.g. High(0xAABB) = 0xAA
+	ubyte High(ubyte2 val)
 	{
-		return (val >> 4);
+		return (ubyte)(val >> 8);
 	}
 
 	bool IsSet(Flag flag)
@@ -360,155 +411,175 @@ private:
 			RemoveFlag(flag);
 	}
 
-	//get most significant bit
+	template<size_t bit>
+	bool isBitOn(ubyte2 data)
+	{
+		return (data & (1 << bit)) != 0;
+	}
+
+	//get most significant bit, or sign bit if two's complement
 	bool GetMSB(ubyte data)
 	{
 		return (data >> 7);
 	}
 
+	//Push onto Stack and update stack pointer
+	void PushOntoStack(ubyte val)
+	{
+		SetData(val, (ubyte2)StackPointer + 0x0100);//StackPointer MSB is always 0x01
+		--StackPointer;//stack grows toward lower memory addresses, it starts at 0x01xx and goes to 0x0100
+	}
+
+	//Pop value off stack and update stack pointer
+	ubyte& PopOffStack()
+	{
+		++StackPointer;
+		return GetData((ubyte2)StackPointer + 0x01ff);
+	}
+
 	//Read byte from 16-bit address
-	ubyte& Read(ubyte2 index);
+	ubyte& GetData(ubyte2 index);
 
 	//Write byte to 16-bit address
-	void Write(ubyte val, ubyte2 index);
+	void SetData(ubyte val, ubyte2 index);
 
 	/* Addressing Mode Functions */
 	//Source: "https://www.middle-engine.com/blog/posts/2020/06/23/programming-the-nes-the-6502-in-detail"
 	//All of these assume that when they're invoked, program counter is still pointing to the opcode
 	//for convenience raw data is stored as unsigned bytes however the representation used in the data 
 	//is not reflective of the type assigned to it. The data returned as ubytes will probably actually be signed 2'complement
-	ubyte& ACA(ubyte& cycles);//Accumulator Addressing
-	ubyte& IMM(ubyte& cycles);//Immediate Address
-	ubyte& ABS(ubyte& cycles);//Absolute Addressing
-	ubyte& ZPA(ubyte& cycles);//Zero Page Addressing
-	ubyte& ZPX(ubyte& cycles);//Indexed Zero Page Addressing X
-	ubyte& ZPY(ubyte& cycles);//Indexed Zero Page Addressing Y
-	ubyte& IAX(ubyte& cycles);//Indexed Absolute Addressing X
-	ubyte& IAY(ubyte& cycles);//Indexed Absolute Addressing Y
-	ubyte& IMP(ubyte& cycles);//Implied Addressing
-	ubyte2 REL(ubyte& cycles);//Relative Addressing return absolute address to jump to if condition passes, used exclusively by branch instructions
-	ubyte& IIX(ubyte& cycles);//Indexed Indirect Addressing
-	ubyte& IIY(ubyte& cycles);//Indirect Indexed Addressing
-	ubyte2 ABI(ubyte& cycles);//Absolute Indirect
-	ubyte2 ABJ(ubyte& cycles);//Special Addressing Mode for JMP/JSR that take in 16-bit input absolute address
-	ubyte2 ERR(ubyte&);//Handle cases where an invalid opcode is called
+	ubyte& ACA(ubyte& deltaCycles);//Accumulator Addressing
+	ubyte& IMM(ubyte& deltaCycles);//Immediate Address
+	ubyte& ABS(ubyte& deltaCycles);//Absolute Addressing
+	ubyte& ZPA(ubyte& deltaCycles);//Zero Page Addressing
+	ubyte& ZPX(ubyte& deltaCycles);//Indexed Zero Page Addressing X
+	ubyte& ZPY(ubyte& deltaCycles);//Indexed Zero Page Addressing Y
+	ubyte& IAX(ubyte& deltaCycles);//Indexed Absolute Addressing X
+	ubyte& IAY(ubyte& deltaCycles);//Indexed Absolute Addressing Y
+	ubyte& IMP(ubyte& deltaCycles);//Implied Addressing
+	ubyte2 REL(ubyte& deltaCycles);//Relative Addressing return absolute address to jump to if condition passes, used exclusively by branch instructions
+	ubyte& IIX(ubyte& deltaCycles);//Indexed Indirect Addressing
+	ubyte& IIY(ubyte& deltaCycles);//Indirect Indexed Addressing
+	ubyte2 ABI(ubyte& deltaCycles);//Absolute Indirect
+	ubyte2 ABJ(ubyte& deltaCycles);//Special Addressing Mode for JMP/JSR that take in 16-bit input absolute address
+	ubyte2 ERR(ubyte& deltaCycles);//Handle cases where an invalid opcode is called
 
 	/*Instructions*/
 	//Source: "https://www.middle-engine.com/blog/posts/2020/06/23/programming-the-nes-the-6502-in-detail"
 
 	//Add Memory to A with Carry
-	void ADC(ubyte& data);
+	void ADC(ubyte& data, ubyte& deltaCycles);
 	//Bitwise - AND A with Memory
-	void AND(ubyte& data);
+	void AND(ubyte& data, ubyte& deltaCycles);
 	//Arithmetic Shift Left
-	void ASL(ubyte& data);
+	void ASL(ubyte& data, ubyte& deltaCycles);
 	//Branch iff P.C is CLEAR
-	void BCC(ubyte2 address);
+	void BCC(ubyte2 address, ubyte& deltaCycles);
 	//Branch iff P.C is SET
-	void BCS(ubyte2 address);
+	void BCS(ubyte2 address, ubyte& deltaCycles);
 	//Branch iff P.Z is SET
-	void BEQ(ubyte2 address);
+	void BEQ(ubyte2 address, ubyte& deltaCycles);
 	//Test bits in A with M
-	void BIT(ubyte& data);
+	void BIT(ubyte& data, ubyte& deltaCycles);
 	//Branch iff P.N is SET
-	void BMI(ubyte2 address);
+	void BMI(ubyte2 address, ubyte& deltaCycles);
 	//Branch iff P.Z is CLEAR
-	void BNE(ubyte2 address);
+	void BNE(ubyte2 address, ubyte& deltaCycles);
 	//Branch iff P.N is CLEAR
-	void BPL(ubyte2 address);
+	void BPL(ubyte2 address, ubyte& deltaCycles);
 	//Simulate Interrupt ReQuest(IRQ)
-	void BRK(ubyte& data);
+	void BRK(ubyte& data, ubyte& deltaCycles);
 	//Branch iff P.V is CLEAR
-	void BVC(ubyte2 address);
+	void BVC(ubyte2 address, ubyte& deltaCycles);
 	//Branch iff P.V is SET
-	void BVS(ubyte2 address);
+	void BVS(ubyte2 address, ubyte& deltaCycles);
 	//Clear Carry Flag
-	void CLC(ubyte& data);
+	void CLC(ubyte& data, ubyte& deltaCycles);
 	//Clear Decimal Flag(P.D)
-	void CLD(ubyte& data);
+	void CLD(ubyte& data, ubyte& deltaCycles);
 	//Clear Interrupt(disable) Flag(P.I)
-	void CLI(ubyte& data);
+	void CLI(ubyte& data, ubyte& deltaCycles);
 	//Clear oVerflow Flag(P.V)
-	void CLV(ubyte& data);
+	void CLV(ubyte& data, ubyte& deltaCycles);
 	//Compare A with Memory
-	void CMP(ubyte& data);
+	void CMP(ubyte& data, ubyte& deltaCycles);
 	//Compare X with Memory
-	void CPX(ubyte& data);
+	void CPX(ubyte& data, ubyte& deltaCycles);
 	//Compare Y with Memory
-	void CPY(ubyte& data);
+	void CPY(ubyte& data, ubyte& deltaCycles);
 	//Decrement Memory by one
-	void DEC(ubyte& data);
+	void DEC(ubyte& data, ubyte& deltaCycles);
 	//Decrement X by one
-	void DEX(ubyte& data);
+	void DEX(ubyte& data, ubyte& deltaCycles);
 	//Decrement Y by one
-	void DEY(ubyte& data);
+	void DEY(ubyte& data, ubyte& deltaCycles);
 	//Bitwise - EXclusive - OR A with Memory
-	void EOR(ubyte& data);
+	void EOR(ubyte& data, ubyte& deltaCycles);
 	//Increment Memory by one
-	void INC(ubyte& data);
+	void INC(ubyte& data, ubyte& deltaCycles);
 	//Increment X by one
-	void INX(ubyte& data);
+	void INX(ubyte& data, ubyte& deltaCycles);
 	//Increment Y by one
-	void INY(ubyte& data);
+	void INY(ubyte& data, ubyte& deltaCycles);
 	//GOTO Address
-	void JMP(ubyte2 data);
+	void JMP(ubyte2 data, ubyte& deltaCycles);
 	//Jump to SubRoutine
-	void JSR(ubyte2 data);
+	void JSR(ubyte2 data, ubyte& deltaCycles);
 	//Load A with Memory
-	void LDA(ubyte& data);
+	void LDA(ubyte& data, ubyte& deltaCycles);
 	//Load X with Memory
-	void LDX(ubyte& data);
+	void LDX(ubyte& data, ubyte& deltaCycles);
 	//Load Y with Memory
-	void LDY(ubyte& data);
+	void LDY(ubyte& data, ubyte& deltaCycles);
 	//Logical Shift Right
-	void LSR(ubyte& data);
+	void LSR(ubyte& data, ubyte& deltaCycles);
 	//No OPeration
-	void NOP(ubyte& data);
+	void NOP(ubyte& data, ubyte& deltaCycles);
 	//Bitwise-OR A with Memory
-	void ORA(ubyte& data);
+	void ORA(ubyte& data, ubyte& deltaCycles);
 	// PusH A onto Stack
-	void PHA(ubyte& data);
+	void PHA(ubyte& data, ubyte& deltaCycles);
 	//PusH P onto Stack
-	void PHP(ubyte& data);
+	void PHP(ubyte& data, ubyte& deltaCycles);
 	//PulL from Stack to A
-	void PLA(ubyte& data);
+	void PLA(ubyte& data, ubyte& deltaCycles);
 	//PulL from Stack to P
-	void PLP(ubyte& data);
+	void PLP(ubyte& data, ubyte& deltaCycles);
 	//ROtate Left
-	void ROL(ubyte& data);
+	void ROL(ubyte& data, ubyte& deltaCycles);
 	//ROtate Right
-	void ROR(ubyte& data);
+	void ROR(ubyte& data, ubyte& deltaCycles);
 	//ReTurn from Interrupt
-	void RTI(ubyte& data);
+	void RTI(ubyte& data, ubyte& deltaCycles);
 	//ReTurn from Subroutine
-	void RTS(ubyte& data);
+	void RTS(ubyte& data, ubyte& deltaCycles);
 	//Subtract Memory from A with Borrow
-	void SBC(ubyte& data);
+	void SBC(ubyte& data, ubyte& deltaCycles);
 	//Set Carry Flag
-	void SEC(ubyte& data);
+	void SEC(ubyte& data, ubyte& deltaCycles);
 	//Set Binary Coded Decimal Flag (P.D)
-	void SED(ubyte& data);
+	void SED(ubyte& data, ubyte& deltaCycles);
 	//Set Interrupt (disable) Flag (P.I)
-	void SEI(ubyte& data);
+	void SEI(ubyte& data, ubyte& deltaCycles);
 	//Store Accumulator In Memory
-	void STA(ubyte& data);
+	void STA(ubyte& data, ubyte& deltaCycles);
 	//Store X in Memory
-	void STX(ubyte& data);
+	void STX(ubyte& data, ubyte& deltaCycles);
 	//Store Y in Memory
-	void STY(ubyte& data);
+	void STY(ubyte& data, ubyte& deltaCycles);
 	//Transfer A to X
-	void TAX(ubyte& data);
+	void TAX(ubyte& data, ubyte& deltaCycles);
 	//Transfer A to Y
-	void TAY(ubyte& data);
+	void TAY(ubyte& data, ubyte& deltaCycles);
 	//Transfer Stack Pointer to X
-	void TSX(ubyte& data);
+	void TSX(ubyte& data, ubyte& deltaCycles);
 	//Transfer X to A
-	void TXA(ubyte& data);
+	void TXA(ubyte& data, ubyte& deltaCycles);
 	//Transfer X to Stack Pointer
-	void TXS(ubyte& data);
+	void TXS(ubyte& data, ubyte& deltaCycles);
 	//Transfer Y to A
-	void TYA(ubyte& data);
+	void TYA(ubyte& data, ubyte& deltaCycles);
 	//Handles cases where an invalid opcode is called
-	void NUL(ubyte& data);
+	void NUL(ubyte& data, ubyte& deltaCycles);
 };
 
