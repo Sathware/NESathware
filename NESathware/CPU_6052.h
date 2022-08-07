@@ -3,6 +3,8 @@
 #include "BUS.h"
 #include <variant>
 #include <bitset>
+#include <iostream>
+#include <iomanip>
 
 //Implementation of the 6502 8-Bit CPU
 //Source: Technical overview "https://en.wikipedia.org/wiki/MOS_Technology_6502"
@@ -15,51 +17,22 @@ class CPU_6052
 	using OperandAddress = ubyte2(CPU_6052::*)(ubyte&);
 	using OperandByte = ubyte&(CPU_6052::*)(ubyte&);
 public:
-	CPU_6052(BUS& bus)
+	CPU_6052(BUS& bus, ubyte2 programStart)
 		:Bus(bus),
 		Accumulator(0),
 		Y_Register(0),
 		X_Register(0),
 		ProgramCounter(0),
-		StackPointer(0),
+		StackPointer(0xff),
 		Status(0)
 	{
 		Reset();//Initialize CPU, simulates startup sequence
+		ProgramCounter = programStart;
 	}
 
 	//Execute current instruction and move to next instruction
 	//return number of cycles to wait for executed instruction to complete
-	ubyte Execute()
-	{
-		ubyte opcode = GetData(ProgramCounter);
-		const Instruction& instruction = Instructions[opcode];
-		ubyte deltaCycles = 0;
-
-		if (std::holds_alternative<JumpOperation>(instruction.Operation))
-		{
-			auto dataFunc = std::get<OperandAddress>(instruction.Data);//get addressing mode
-			auto jumpoperation = std::get<JumpOperation>(instruction.Operation);//get operation
-
-			byte2 address = (this->*dataFunc)(deltaCycles);//get change in cycles depending on whether page boundary was crossed or not
-
-			(this->*jumpoperation)(address, deltaCycles);//update based on function
-		}
-		else if (std::get<Operation>(instruction.Operation) == &CPU_6052::NUL)
-		{
-			throw std::runtime_error("Invalid Opcode!");
-		}
-		else
-		{
-			auto dataFunc = std::get<OperandByte>(instruction.Data);//get addressing mode
-			auto operation = std::get<Operation>(instruction.Operation);
-
-			ubyte& data = (this->*dataFunc)(deltaCycles);//get change in cycles depending on whether page boundary was crossed or not
-
-			(this->*operation)(data, deltaCycles);//update based on function
-		}
-
-		return instruction.baseCycles + deltaCycles;
-	}
+	ubyte Execute();
 private:
 	//THIS CPU IS LITTLE ENDIAN
 
@@ -474,7 +447,7 @@ private:
 	ubyte& PopOffStack()
 	{
 		++StackPointer;
-		return GetData((ubyte2)StackPointer + 0x01ff);
+		return GetData((ubyte2)StackPointer + 0x0100);
 	}
 
 	//Read byte from 16-bit address

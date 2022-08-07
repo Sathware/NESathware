@@ -1,5 +1,57 @@
 #include "CPU_6052.h"
+#include <string>
 
+
+ubyte CPU_6052::Execute()
+{
+	{
+		static int cycleCount = 0;
+		ubyte opcode = GetData(ProgramCounter);
+		const Instruction& instruction = Instructions[opcode];
+		ubyte deltaCycles = 0;
+
+		if (ProgramCounter ==/* 0xdbb5u*/0xc66eu)
+			int x = 5;//Something to put a break point on
+
+		std::cout << "Memory: " << "0x" << std::hex << std::setfill('0') << std::setw(4) << (unsigned int)ProgramCounter;
+		std::cout << "   Opcode: " << " 0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)opcode;
+		std::cout << "   Name: " << instruction.Name;
+
+		if (std::holds_alternative<JumpOperation>(instruction.Operation))
+		{
+			auto jumpoperation = std::get<JumpOperation>(instruction.Operation);//get operation
+			auto dataFunc = std::get<OperandAddress>(instruction.Data);//get addressing mode
+
+			ubyte2 address = (this->*dataFunc)(deltaCycles);//get change in cycles depending on whether page boundary was crossed or not
+
+			std::cout << "   Data: " << "0x" << std::hex << std::setfill('0') << std::setw(4) << (unsigned int)address;
+
+			(this->*jumpoperation)(address, deltaCycles);//update based on function
+		}
+		else if (std::get<Operation>(instruction.Operation) == &CPU_6052::NUL)
+		{
+			throw std::runtime_error("Invalid Opcode!");
+		}
+		else
+		{
+			auto operation = std::get<Operation>(instruction.Operation);
+			auto dataFunc = std::get<OperandByte>(instruction.Data);//get addressing mode
+
+			ubyte& data = (this->*dataFunc)(deltaCycles);//get change in cycles depending on whether page boundary was crossed or not
+
+			if (&data != &Status)
+				std::cout << "   Data: " << "0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)data;
+			else
+				std::cout << "   Data: " << "-";
+
+			(this->*operation)(data, deltaCycles);//update based on function
+		}
+		cycleCount += instruction.baseCycles + deltaCycles;
+
+		std::cout << "   Cyc: " << std::dec << cycleCount << std::endl;
+		return instruction.baseCycles + deltaCycles;
+	}
+}
 
 ubyte& CPU_6052::GetData(ubyte2 index)
 {
@@ -128,7 +180,7 @@ ubyte& CPU_6052::IIX(ubyte& deltaCycles)
 	pAddress += X_Register;//Carry/Overflow is disregarded as per specification, value must be within zero page, which is automatically handled by unsigned arithmetic
 
 	ubyte2 addressLow = GetData(pAddress);//Some address in page zero
-	ubyte2 addressHigh = GetData(pAddress + 1u);//The next address in page zero, or wraps around to beginning of page zero which is automatically handled by unsigned arithmetic
+	ubyte2 addressHigh = GetData(ubyte(pAddress + 1u));//The next address in page zero, or wraps around to beginning of page zero which is automatically handled by unsigned arithmetic
 	ubyte2 address = (addressHigh << 8u) | addressLow;
 
 	return GetData(address);
@@ -141,7 +193,7 @@ ubyte& CPU_6052::IIY(ubyte& deltaCycles)
 	++ProgramCounter;
 
 	ubyte2 addressLow = GetData(pAddress);
-	ubyte2 addressHigh = GetData(pAddress + 1u);//Wraps pAddress as per specification which is handled automatically by unsigned arithmetic
+	ubyte2 addressHigh = GetData(ubyte(pAddress + 1u));//Wraps pAddress as per specification which is handled automatically by unsigned arithmetic
 	ubyte2 address = (addressHigh << 8) | addressLow;
 
 	if (High(address) != High(address + Y_Register))
@@ -153,19 +205,19 @@ ubyte& CPU_6052::IIY(ubyte& deltaCycles)
 ubyte2 CPU_6052::ABI(ubyte& deltaCycles)
 {
 	++ProgramCounter;
-	ubyte2 pAddressLow = GetData(ProgramCounter);
+	ubyte pAddressLow = GetData(ProgramCounter);
 	++ProgramCounter;
 	ubyte2 pAddressHigh = GetData(ProgramCounter);
 
 	ubyte2 pAddress = (pAddressHigh << 8) | pAddressLow;
 
+	ubyte2 pAddressNext = (pAddressHigh << 8) | ubyte(pAddressLow + 1);//Simulate bug where address Read(xxff + 1) actually gives Read(xx00)
+
 	ubyte2 addressLow = GetData(pAddress);
-	ubyte2 addressHigh = GetData((pAddress + 1) % 256);//Simulate bug of 6052 where indirect jump at xxff will fail because trying to read (xxff+1) == Read(xx00)
+	ubyte2 addressHigh = GetData(pAddressNext);
 	ubyte2 address = (addressHigh << 8) | addressLow;
 
-	//ProgramCounter = address;
-
-	return address;//Dummy return
+	return address;
 }
 
 ubyte2 CPU_6052::ABJ(ubyte& deltaCycles)
