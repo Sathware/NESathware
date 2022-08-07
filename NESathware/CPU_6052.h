@@ -83,7 +83,7 @@ private:
 	}
 
 	//Interrupt function for simulating Interrupts and non maskable interrupts as per specification
-	void Interrupt(bool unmaskable)
+	ubyte Interrupt(bool unmaskable)
 	{
 		if (unmaskable)
 		{
@@ -91,21 +91,23 @@ private:
 			//and are not affected by Interrupt disable flag
 			PushOntoStack(High(ProgramCounter));
 			PushOntoStack(Low(ProgramCounter));
-			PushOntoStack(Status | Break);
+			PushOntoStack(Status | Break | InterruptDisable);
 			ubyte2 pInterruptHandlerLow = GetData(0xfffa);
 			ubyte2 pInterruptHandlerHigh = GetData(0xfffb);
 			ubyte2 pInterruptHandler = (pInterruptHandlerHigh << 8) | pInterruptHandlerLow;
 			ProgramCounter = pInterruptHandler;
+			return 7;//Number of cycles for an interrupt to be processed
 		}
 		else if (!IsSet(InterruptDisable))
 		{
 			PushOntoStack(High(ProgramCounter));
 			PushOntoStack(Low(ProgramCounter));
-			PushOntoStack(Status | Break);
+			PushOntoStack(Status | Break | InterruptDisable);
 			ubyte2 pInterruptHandlerLow = GetData(0xfffe);
 			ubyte2 pInterruptHandlerHigh = GetData(0xffff);
 			ubyte2 pInterruptHandler = (pInterruptHandlerHigh << 8) | pInterruptHandlerLow;
 			ProgramCounter = pInterruptHandler;
+			return 7;//Number of cycles for an interrupt to be processed
 		}
 		//Ignore if interrupt disable is set and a normal interrupt is recieved
 	}

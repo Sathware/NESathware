@@ -137,11 +137,11 @@ ubyte& CPU_6052::IIX(ubyte& deltaCycles)
 ubyte& CPU_6052::IIY(ubyte& deltaCycles)
 {
 	++ProgramCounter;
-	ubyte2 pAddress = GetData(ProgramCounter);
+	ubyte pAddress = GetData(ProgramCounter);
 	++ProgramCounter;
 
 	ubyte2 addressLow = GetData(pAddress);
-	ubyte2 addressHigh = GetData(pAddress + 1u);
+	ubyte2 addressHigh = GetData(pAddress + 1u);//Wraps pAddress as per specification which is handled automatically by unsigned arithmetic
 	ubyte2 address = (addressHigh << 8) | addressLow;
 
 	if (High(address) != High(address + Y_Register))
