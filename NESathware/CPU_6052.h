@@ -1,5 +1,6 @@
 #pragma once
 #include "CommonTypes.h"
+#include "BUS.h"
 #include <variant>
 #include <bitset>
 #include <iostream>
@@ -16,7 +17,7 @@ class CPU_6052
 	using OperandAddress = ubyte2(CPU_6052::*)(ubyte&);
 	using OperandByte = ubyte&(CPU_6052::*)(ubyte&);
 public:
-	CPU_6052(class BUS& bus, ubyte2 programStart)
+	CPU_6052(BUS& bus, ubyte2 programStart)
 		:Bus(bus),
 		Accumulator(0),
 		Y_Register(0),

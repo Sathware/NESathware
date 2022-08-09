@@ -1,26 +1,21 @@
 #include "CPU_6052.h"
 #include <string>
-#include "BUS.h"
+
 
 ubyte CPU_6052::Execute()
 {
 	{
-#if defined(DEBUG) || defined(_DEBUG)
 		static int cycleCount = 0;
-#endif // DEBUG
-
 		ubyte opcode = GetData(ProgramCounter);
 		const Instruction& instruction = Instructions[opcode];
 		ubyte deltaCycles = 0;
 
-#if defined(DEBUG) || defined(_DEBUG)
-		//if (ProgramCounter ==/* 0xdbb5u*/0xc66eu)
-		//	int x = 5;//Something to put a break point on
+		if (ProgramCounter ==/* 0xdbb5u*/0xc66eu)
+			int x = 5;//Something to put a break point on
 
 		std::cout << "Memory: " << "0x" << std::hex << std::setfill('0') << std::setw(4) << (unsigned int)ProgramCounter;
 		std::cout << "   Opcode: " << " 0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)opcode;
 		std::cout << "   Name: " << instruction.Name;
-#endif
 
 		if (std::holds_alternative<JumpOperation>(instruction.Operation))
 		{
@@ -29,9 +24,7 @@ ubyte CPU_6052::Execute()
 
 			ubyte2 address = (this->*dataFunc)(deltaCycles);//get change in cycles depending on whether page boundary was crossed or not
 
-#if defined(DEBUG) || defined(_DEBUG)
 			std::cout << "   Data: " << "0x" << std::hex << std::setfill('0') << std::setw(4) << (unsigned int)address;
-#endif
 
 			(this->*jumpoperation)(address, deltaCycles);//update based on function
 		}
@@ -46,33 +39,28 @@ ubyte CPU_6052::Execute()
 
 			ubyte& data = (this->*dataFunc)(deltaCycles);//get change in cycles depending on whether page boundary was crossed or not
 
-#if defined(DEBUG) || defined(_DEBUG)
 			if (&data != &Status)
 				std::cout << "   Data: " << "0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)data;
 			else
 				std::cout << "   Data: " << "-";
-#endif
 
 			(this->*operation)(data, deltaCycles);//update based on function
 		}
 		cycleCount += instruction.baseCycles + deltaCycles;
 
-#if defined(DEBUG) || defined(_DEBUG)
 		std::cout << "   Cyc: " << std::dec << cycleCount << std::endl;
-#endif
-
 		return instruction.baseCycles + deltaCycles;
 	}
 }
 
-ubyte& CPU_6052::GetData(ubyte2 address)
+ubyte& CPU_6052::GetData(ubyte2 index)
 {
-	return Bus.Read(address);
+	return Bus.RAM.at(index);
 }
 
-void CPU_6052::SetData(ubyte val, ubyte2 address)
+void CPU_6052::SetData(ubyte val, ubyte2 index)
 {
-	Bus.Write(val, address);
+	Bus.RAM.at(index) = val;
 }
 
 /* Implementation of Addressing Modes */

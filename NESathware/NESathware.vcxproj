@@ -144,16 +144,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BUS.cpp" />
-    <ClCompile Include="Catridge.cpp" />
     <ClCompile Include="CPU_6052.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BUS.h" />
-    <ClInclude Include="Cartridge.h" />
     <ClInclude Include="CommonTypes.h" />
     <ClInclude Include="CPU_6052.h" />
-    <ClInclude Include="Mapper.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="nestest.nes" />
