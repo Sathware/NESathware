@@ -1,6 +1,8 @@
 #include "CPU_6052.h"
 #include <string>
-
+#include "BUS.h"
+#include <iostream>
+#include <iomanip>
 
 ubyte CPU_6052::Execute()
 {
@@ -53,14 +55,43 @@ ubyte CPU_6052::Execute()
 	}
 }
 
-ubyte& CPU_6052::GetData(ubyte2 index)
+ubyte CPU_6052::Interrupt(bool unmaskable)
 {
-	return Bus.RAM.at(index);
+	if (unmaskable)
+	{
+		//unmaskable interrupt handlers are stored in another address
+		//and are not affected by Interrupt disable flag
+		PushOntoStack(High(ProgramCounter));
+		PushOntoStack(Low(ProgramCounter));
+		PushOntoStack(Status | Break | InterruptDisable);
+		ubyte2 pInterruptHandlerLow = GetData(0xfffa);
+		ubyte2 pInterruptHandlerHigh = GetData(0xfffb);
+		ubyte2 pInterruptHandler = (pInterruptHandlerHigh << 8) | pInterruptHandlerLow;
+		ProgramCounter = pInterruptHandler;
+		return 7;//Number of cycles for an interrupt to be processed
+	}
+	else if (!IsSet(InterruptDisable))
+	{
+		PushOntoStack(High(ProgramCounter));
+		PushOntoStack(Low(ProgramCounter));
+		PushOntoStack(Status | Break | InterruptDisable);
+		ubyte2 pInterruptHandlerLow = GetData(0xfffe);
+		ubyte2 pInterruptHandlerHigh = GetData(0xffff);
+		ubyte2 pInterruptHandler = (pInterruptHandlerHigh << 8) | pInterruptHandlerLow;
+		ProgramCounter = pInterruptHandler;
+		return 7;//Number of cycles for an interrupt to be processed
+	}
+	//Ignore if interrupt disable is set and a normal interrupt is recieved
 }
 
-void CPU_6052::SetData(ubyte val, ubyte2 index)
+ubyte& CPU_6052::GetData(ubyte2 address)
 {
-	Bus.RAM.at(index) = val;
+	return Bus.Read(address);
+}
+
+void CPU_6052::SetData(ubyte val, ubyte2 address)
+{
+	Bus.Write(val, address);
 }
 
 /* Implementation of Addressing Modes */
