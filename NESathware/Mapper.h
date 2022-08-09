@@ -1,51 +1,38 @@
 #pragma once
 #include "CommonTypes.h"
 #include <cassert>
+#include <array>
 
 struct Mapper
 {
 	virtual ~Mapper() = default;
 	virtual ubyte& Read(ubyte2 address) = 0;
-	virtual void Write(ubyte val, ubyte2 address) = 0;
 };
 
 //CRTP Pattern
 template<typename T>
 struct Mapper_Base : Mapper
 {
-	Mapper_Base(ubyte* CartridgeMemory)
+	Mapper_Base(std::array<ubyte, 0xbfe0>& CartridgeMemory)
 		:CartridgeMemory(CartridgeMemory)
 	{}
 	ubyte& Read(ubyte2 address)
 	{
-		assert(address >= 0x4020 && address <=0xffff);
+		assert(address >= 0 && address <=0xbfdf);
 
 		return static_cast<T*>(this)->Read(address);
 	}
-	void Write(ubyte val, ubyte2 address)
-	{
-		assert(address >= 0x4020 && address <= 0xffff);
-
-		static_cast<T*>(this)->Write(val, address);
-	}
-	ubyte* CartridgeMemory;
+	std::array<ubyte, 0xbfe0>& CartridgeMemory;
 };
 
 struct Mapper000 : public Mapper_Base<Mapper000>
 {
-	Mapper000(ubyte* CartridgeMemory)
+	Mapper000(std::array<ubyte, 0xbfe0>& CartridgeMemory)
 		:Mapper_Base<Mapper000>(CartridgeMemory)
 	{}
 	ubyte& Read(ubyte2 address)
 	{
-		assert(address >= 0x8000 && address <= 0xffff);
-		address = (address & 0x3fff) + 0x8000;//Mirror addresses
-		return CartridgeMemory[address];
-	}
-	void Write(ubyte val, ubyte2 address)
-	{
-		assert(address >= 0x8000 && address <= 0xffff);
-		address = (address & 0x3fff) + 0x8000;//Mirror addresses
-		CartridgeMemory[address] = val;
+		address = (address & 0x3fff);//Mirror addresses
+		return CartridgeMemory.at(address);
 	}
 };

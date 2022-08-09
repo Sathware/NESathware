@@ -29,15 +29,10 @@ void Cartridge::Load(std::string filename)
 
 	assert(mapperNum == 0);
 	mpMapper = std::make_unique<Mapper000>(Memory);
-	file.read(reinterpret_cast<char*>(&Memory[0x8000]), (size_t)header.size_PRGRom * 16384);
+	file.read(reinterpret_cast<char*>(&Memory[0x3fe0u]), (size_t)header.size_PRGRom * 16384);
 }
 
 ubyte& Cartridge::Read(ubyte2 address)
 {
 	return mpMapper->Read(address);
-}
-
-void Cartridge::Write(ubyte val, ubyte2 address)
-{
-	return mpMapper->Write(val, address);
 }
