@@ -6,13 +6,13 @@ ubyte& BUS::Read(ubyte2 address)
 	if (address < 0x2000)
 	{
 		//2KB internal RAM and mirrors
-		ubyte2 index = address % 0x0800;
+		ubyte2 index = address % 0x0800u;
 		return mRAM.at(index);
 	}
 	else if (address < 0x4000)
 	{
 		//PPU registers and mirrors
-		ubyte2 index = (address - 0x2000) % 8;
+		ubyte2 index = address % 0x8u;
 	}
 	else if (address < 0x4018)
 	{
@@ -26,8 +26,7 @@ ubyte& BUS::Read(ubyte2 address)
 	else if (address <= 0xffff)
 	{
 		//Cartridge space
-		ubyte2 index = address - 0x4020;
-		return mpCartridge->Read(index);
+		return mpCartridge->Read(address);
 	}
 }
 

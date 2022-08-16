@@ -26,17 +26,6 @@ public:
 	//Execute current instruction and move to next instruction
 	//return number of cycles to wait for executed instruction to complete
 	ubyte Execute();
-private:
-	//THIS CPU IS LITTLE ENDIAN
-
-	BUS& Bus;
-
-	ubyte Accumulator;//Accumulator register
-	ubyte Y_Register;//Index register
-	ubyte X_Register;//Index register
-	ubyte2 ProgramCounter;//Program Counter, always points to next instruction to be executed
-	ubyte StackPointer;//Stack Pointer, always points to the next available memory slot
-	ubyte Status;//Flags
 
 	//Initializes the CPU to begin Program execution as per specification
 	//Only initializes the ProgramCounter and sets InterruptDisable flag
@@ -49,7 +38,19 @@ private:
 	}
 
 	//Interrupt function for simulating Interrupts and non maskable interrupts as per specification
-	ubyte Interrupt(bool unmaskable);
+	ubyte NMI();
+	ubyte IRQ();
+private:
+	//THIS CPU IS LITTLE ENDIAN
+
+	BUS& Bus;
+
+	ubyte Accumulator;//Accumulator register
+	ubyte Y_Register;//Index register
+	ubyte X_Register;//Index register
+	ubyte2 ProgramCounter;//Program Counter, always points to next instruction to be executed
+	ubyte StackPointer;//Stack Pointer, always points to the next available memory slot
+	ubyte Status;//Flags
 
 	enum Flag : ubyte
 	{
@@ -63,10 +64,10 @@ private:
 		Negative =         0b10000000
 	};
 
-	using JumpOperation = void(CPU_6052::*)(ubyte2, ubyte&);
-	using Operation = void(CPU_6052::*)(ubyte&, ubyte&);
-	using OperandAddress = ubyte2(CPU_6052::*)(ubyte&);
-	using OperandByte = ubyte & (CPU_6052::*)(ubyte&);
+	using JumpOperation =  void (CPU_6052::*)(ubyte2, ubyte&);
+	using Operation =      void (CPU_6052::*)(ubyte&, ubyte&);
+	using OperandAddress = ubyte2 (CPU_6052::*)(ubyte&);
+	using OperandByte =    ubyte& (CPU_6052::*)(ubyte&);
 	struct Instruction
 	{
 		char Name[4];

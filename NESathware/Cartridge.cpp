@@ -14,7 +14,13 @@ Cartridge::Cartridge(BUS& bus, std::string filename)
 
 	file.read(reinterpret_cast<char*>(&header), 16);
 
-	mpMapper = std::make_unique<Mapper000>(ROM, header, file);
+	ubyte mapperNum = (header.flags7 & 0xf0) | (header.flags6 >> 4);
+
+	switch (mapperNum)
+	{
+	case 0: mpMapper = std::make_unique<Mapper0>(header, file); break;
+	//case 1: mpMapper = std::make_unique<Mapper1>(header, file); break;
+	}
 }
 
 ubyte& Cartridge::Read(ubyte2 address)

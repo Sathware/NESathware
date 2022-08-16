@@ -10,6 +10,5 @@ public:
 	ubyte& Read(ubyte2 address);
 private:
 	BUS& bus;
-	std::array<ubyte, 0xbfe0u> ROM = { 0 };
 	std::unique_ptr<Mapper> mpMapper;
 };
