@@ -157,6 +157,7 @@
     <ClInclude Include="CommonTypes.h" />
     <ClInclude Include="CPU_6052.h" />
     <ClInclude Include="Mapper.h" />
+    <ClInclude Include="NES.h" />
     <ClInclude Include="PPU_2C02.h" />
   </ItemGroup>
   <ItemGroup>

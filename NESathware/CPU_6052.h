@@ -9,7 +9,7 @@
 class CPU_6052
 {
 public:
-	CPU_6052(class BUS& bus, ubyte2 programStart)
+	CPU_6052(class BUS& bus, ubyte2 programStartOverride)
 		:Bus(bus),
 		Accumulator(0),
 		Y_Register(0),
@@ -20,7 +20,7 @@ public:
 	{
 		//Reset();//Initialize CPU, simulates startup sequence
 		SetFlag(InterruptDisable);
-		ProgramCounter = programStart;
+		ProgramCounter = programStartOverride;
 	}
 
 	//Execute current instruction and move to next instruction
