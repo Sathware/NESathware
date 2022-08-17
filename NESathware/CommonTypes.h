@@ -1,5 +1,6 @@
 #pragma once
 #include <stdexcept>
+#include <cassert>
 
 typedef __int8 byte;
 typedef __int16 byte2;

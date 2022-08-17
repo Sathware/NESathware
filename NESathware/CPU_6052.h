@@ -1,10 +1,6 @@
 #pragma once
 #include "CommonTypes.h"
-#include "BUS.h"
 #include <variant>
-#include <bitset>
-#include <iostream>
-#include <iomanip>
 
 //Implementation of the 6502 8-Bit CPU
 //Source: Technical overview "https://en.wikipedia.org/wiki/MOS_Technology_6502"
@@ -12,12 +8,8 @@
 //Programming reference: "http://archive.6502.org/datasheets/synertek_programming_manual.pdf"
 class CPU_6052
 {
-	using JumpOperation = void(CPU_6052::*)(ubyte2, ubyte&);
-	using Operation = void(CPU_6052::*)(ubyte&, ubyte&);
-	using OperandAddress = ubyte2(CPU_6052::*)(ubyte&);
-	using OperandByte = ubyte&(CPU_6052::*)(ubyte&);
 public:
-	CPU_6052(BUS& bus, ubyte2 programStart)
+	CPU_6052(class BUS& bus, ubyte2 programStartOverride)
 		:Bus(bus),
 		Accumulator(0),
 		Y_Register(0),
@@ -26,24 +18,14 @@ public:
 		StackPointer(0xff),
 		Status(0)
 	{
-		Reset();//Initialize CPU, simulates startup sequence
-		ProgramCounter = programStart;
+		//Reset();//Initialize CPU, simulates startup sequence
+		SetFlag(InterruptDisable);
+		ProgramCounter = programStartOverride;
 	}
 
 	//Execute current instruction and move to next instruction
 	//return number of cycles to wait for executed instruction to complete
 	ubyte Execute();
-private:
-	//THIS CPU IS LITTLE ENDIAN
-
-	BUS& Bus;
-
-	ubyte Accumulator;//Accumulator register
-	ubyte Y_Register;//Index register
-	ubyte X_Register;//Index register
-	ubyte2 ProgramCounter;//Program Counter, always points to next instruction to be executed
-	ubyte StackPointer;//Stack Pointer, always points to the next available memory slot
-	ubyte Status;//Flags
 
 	//Initializes the CPU to begin Program execution as per specification
 	//Only initializes the ProgramCounter and sets InterruptDisable flag
@@ -56,34 +38,19 @@ private:
 	}
 
 	//Interrupt function for simulating Interrupts and non maskable interrupts as per specification
-	ubyte Interrupt(bool unmaskable)
-	{
-		if (unmaskable)
-		{
-			//unmaskable interrupt handlers are stored in another address
-			//and are not affected by Interrupt disable flag
-			PushOntoStack(High(ProgramCounter));
-			PushOntoStack(Low(ProgramCounter));
-			PushOntoStack(Status | Break | InterruptDisable);
-			ubyte2 pInterruptHandlerLow = GetData(0xfffa);
-			ubyte2 pInterruptHandlerHigh = GetData(0xfffb);
-			ubyte2 pInterruptHandler = (pInterruptHandlerHigh << 8) | pInterruptHandlerLow;
-			ProgramCounter = pInterruptHandler;
-			return 7;//Number of cycles for an interrupt to be processed
-		}
-		else if (!IsSet(InterruptDisable))
-		{
-			PushOntoStack(High(ProgramCounter));
-			PushOntoStack(Low(ProgramCounter));
-			PushOntoStack(Status | Break | InterruptDisable);
-			ubyte2 pInterruptHandlerLow = GetData(0xfffe);
-			ubyte2 pInterruptHandlerHigh = GetData(0xffff);
-			ubyte2 pInterruptHandler = (pInterruptHandlerHigh << 8) | pInterruptHandlerLow;
-			ProgramCounter = pInterruptHandler;
-			return 7;//Number of cycles for an interrupt to be processed
-		}
-		//Ignore if interrupt disable is set and a normal interrupt is recieved
-	}
+	ubyte NMI();
+	ubyte IRQ();
+private:
+	//THIS CPU IS LITTLE ENDIAN
+
+	BUS& Bus;
+
+	ubyte Accumulator;//Accumulator register
+	ubyte Y_Register;//Index register
+	ubyte X_Register;//Index register
+	ubyte2 ProgramCounter;//Program Counter, always points to next instruction to be executed
+	ubyte StackPointer;//Stack Pointer, always points to the next available memory slot
+	ubyte Status;//Flags
 
 	enum Flag : ubyte
 	{
@@ -97,6 +64,10 @@ private:
 		Negative =         0b10000000
 	};
 
+	using JumpOperation =  void (CPU_6052::*)(ubyte2, ubyte&);
+	using Operation =      void (CPU_6052::*)(ubyte&, ubyte&);
+	using OperandAddress = ubyte2 (CPU_6052::*)(ubyte&);
+	using OperandByte =    ubyte& (CPU_6052::*)(ubyte&);
 	struct Instruction
 	{
 		char Name[4];
@@ -451,10 +422,10 @@ private:
 	}
 
 	//Read byte from 16-bit address
-	ubyte& GetData(ubyte2 index);
+	ubyte& GetData(ubyte2 address);
 
 	//Write byte to 16-bit address
-	void SetData(ubyte val, ubyte2 index);
+	void SetData(ubyte val, ubyte2 address);
 
 	/* Addressing Mode Functions */
 	//Source: "https://www.middle-engine.com/blog/posts/2020/06/23/programming-the-nes-the-6502-in-detail"

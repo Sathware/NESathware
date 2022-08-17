@@ -1,6 +1,8 @@
 #include "CPU_6052.h"
 #include <string>
-
+#include "BUS.h"
+#include <iostream>
+#include <iomanip>
 
 ubyte CPU_6052::Execute()
 {
@@ -19,14 +21,14 @@ ubyte CPU_6052::Execute()
 
 		if (std::holds_alternative<JumpOperation>(instruction.Operation))
 		{
-			auto jumpoperation = std::get<JumpOperation>(instruction.Operation);//get operation
+			auto jumpOperation = std::get<JumpOperation>(instruction.Operation);//get operation
 			auto dataFunc = std::get<OperandAddress>(instruction.Data);//get addressing mode
 
 			ubyte2 address = (this->*dataFunc)(deltaCycles);//get change in cycles depending on whether page boundary was crossed or not
 
 			std::cout << "   Data: " << "0x" << std::hex << std::setfill('0') << std::setw(4) << (unsigned int)address;
 
-			(this->*jumpoperation)(address, deltaCycles);//update based on function
+			(this->*jumpOperation)(address, deltaCycles);//update based on function
 		}
 		else if (std::get<Operation>(instruction.Operation) == &CPU_6052::NUL)
 		{
@@ -53,14 +55,46 @@ ubyte CPU_6052::Execute()
 	}
 }
 
-ubyte& CPU_6052::GetData(ubyte2 index)
+ubyte CPU_6052::NMI()
 {
-	return Bus.RAM.at(index);
+	//unmaskable interrupt handlers are stored in another address
+	//and are not affected by Interrupt disable flag
+	PushOntoStack(High(ProgramCounter));
+	PushOntoStack(Low(ProgramCounter));
+	PushOntoStack(Status | Break | InterruptDisable);
+	//address of NMI interrupt handler
+	ubyte2 pInterruptHandlerLow = GetData(0xfffa);
+	ubyte2 pInterruptHandlerHigh = GetData(0xfffb);
+	ubyte2 pInterruptHandler = (pInterruptHandlerHigh << 8) | pInterruptHandlerLow;
+	ProgramCounter = pInterruptHandler;
+	return 7;//Number of cycles for an interrupt to be processed
 }
 
-void CPU_6052::SetData(ubyte val, ubyte2 index)
+ubyte CPU_6052::IRQ()
 {
-	Bus.RAM.at(index) = val;
+	if (!IsSet(InterruptDisable))
+	{
+		PushOntoStack(High(ProgramCounter));
+		PushOntoStack(Low(ProgramCounter));
+		PushOntoStack(Status | Break | InterruptDisable);
+		//address of IRQ interrupt handler
+		ubyte2 pInterruptHandlerLow = GetData(0xfffe);
+		ubyte2 pInterruptHandlerHigh = GetData(0xffff);
+		ubyte2 pInterruptHandler = (pInterruptHandlerHigh << 8) | pInterruptHandlerLow;
+		ProgramCounter = pInterruptHandler;
+		return 7;//Number of cycles for an interrupt to be processed
+	}
+	return 0;
+}
+
+ubyte& CPU_6052::GetData(ubyte2 address)
+{
+	return Bus.Read(address);
+}
+
+void CPU_6052::SetData(ubyte val, ubyte2 address)
+{
+	Bus.Write(val, address);
 }
 
 /* Implementation of Addressing Modes */
