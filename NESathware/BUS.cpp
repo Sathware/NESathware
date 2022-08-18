@@ -1,6 +1,6 @@
 #include "BUS.h"
 
-ubyte& BUS::Read(ubyte2 address)
+ubyte& BUS::ReadCPU(ubyte2 address)
 {
 	assert(address >= 0 && address <= 0xffff);//Sanity check
 	if (address < 0x2000)
@@ -30,8 +30,8 @@ ubyte& BUS::Read(ubyte2 address)
 	}
 }
 
-void BUS::Write(ubyte val, ubyte2 address)
+void BUS::WriteCPU(ubyte val, ubyte2 address)
 {
 	//Temporary
-	Read(address) = val;
+	ReadCPU(address) = val;
 }
