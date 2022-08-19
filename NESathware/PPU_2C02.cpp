@@ -16,7 +16,7 @@ ubyte PPU_2C02::PaletteRead(ubyte2 index)
 void PPU_2C02::WriteOAM_DMA(ubyte highByte)
 {
 	ubyte2 startAddress = CombineBytes(highByte, 0x0000);
-	memcpy(Bus.GetData(startAddress), OAM.data(), 256u);
+	memcpy(Bus.GetCPUData(startAddress), OAM.data(), 256u);
 }
 
 void PPU_2C02::Write(ubyte val, ubyte2 address)
@@ -37,7 +37,8 @@ ubyte PPU_2C02::ReadRegister(ubyte index)
 	{
 	case PPUSTATUS:
 	{
-		InternalBusLatch = StatusFlags &= 0x7f;//clear vblank bit
+		InternalBusLatch = StatusFlags;
+		StatusFlags &= 0x7f;//clear vblank bit
 		latchToggle = 0;//reset latch toggle
 		return InternalBusLatch;
 	}
@@ -112,4 +113,33 @@ void PPU_2C02::WriteRegister(ubyte val, ubyte index)
 		AddressLow = LowByte(AddressPPU);
 	}
 	}
+}
+
+int PPU_2C02::Render()
+{
+	struct Tile
+	{
+		//Low 8 bytes
+		ubyte LowBytes[8u];
+		//High 8 bytes
+		ubyte HighBytes[8u];
+	};
+	const ubyte* NameTable = Bus.GetPPUData((ControlRegister & 0x03u) * 0x0400u + 0x2000u);
+	const Tile* PatternTable = reinterpret_cast<Tile*>(Bus.GetPPUData(isBitOn<4>(ControlRegister) ? 0x1000u : 0x0000u));
+	
+	for (ubyte y = 0; y <= 0x1d; ++y)
+		for (ubyte x = 0; x <= 0x1f; ++x)
+		{
+			ubyte PatternTableIndex = NameTable[y * 30 + x];
+			
+			const Tile& tile = PatternTable[PatternTableIndex];
+
+			ubyte Pattern[8u] = { 0 };
+			for (ubyte i = 0; i < 8u; ++i)
+				Pattern[i] = tile.LowBytes[i] | tile.HighBytes[i];
+		}
+
+	StatusFlags |= 0x80;//Set VBLANK bit
+
+	return 0;
 }

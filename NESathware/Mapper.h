@@ -90,6 +90,7 @@ struct Mapper0 : public Mapper
 
 	void WritePPU(ubyte val, ubyte2 address)
 	{
+		Mirroring(address) = val;
 	}
 
 	std::function<ubyte& (ubyte2)> Mirroring;

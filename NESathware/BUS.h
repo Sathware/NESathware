@@ -14,7 +14,11 @@ public:
 	//Source: "https://www.nesdev.org/wiki/CPU_memory_map"
 	ubyte ReadCPU(ubyte2 address);
 
-	ubyte* GetData(ubyte2 address);
+	//Get Pointer to buffer/data from CPU address space
+	ubyte* GetCPUData(ubyte2 address);
+
+	//Get Pointer to buffer/data from PPU address space
+	ubyte* GetPPUData(ubyte2 address);
 
 	void WriteCPU(ubyte val, ubyte2 address);
 

@@ -19,8 +19,8 @@ public:
 		Status(0)
 	{
 		//Reset();//Initialize CPU, simulates startup sequence
-		SetFlag(InterruptDisable);
-		ProgramCounter = programStartOverride;
+		//SetFlag(InterruptDisable);
+		//ProgramCounter = programStartOverride;
 	}
 
 	//Execute current instruction and move to next instruction

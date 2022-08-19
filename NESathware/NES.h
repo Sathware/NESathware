@@ -10,17 +10,25 @@ class NES
 {
 public:
 	NES(std::string romFileName, ubyte2 cpuStartOverride)
-		: mBus(), mCartridge(mBus, romFileName), mCPU(mBus, cpuStartOverride), mPPU(mBus), mAPU(mBus)
+		: mBus(), 
+		mCartridge(mBus, romFileName), 
+		mCPU(mBus, cpuStartOverride), 
+		mPPU(mBus), 
+		mAPU(mBus)
 	{
 		mBus.mpCartridge = &mCartridge;
-		mBus.mpCPU = &mCPU;
 		mBus.mpPPU = &mPPU;
 		mBus.mpAPU = &mAPU;
+		mBus.mpCPU = &mCPU;
+
+		mCPU.Reset();
 	}
 
 	size_t Execute()
 	{
 		mTotalCycles += mCPU.Execute();
+		mPPU.Render();
+		//mCPU.NMI();
 		return mTotalCycles;
 	}
 private:

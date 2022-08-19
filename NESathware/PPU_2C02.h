@@ -12,6 +12,8 @@ public:
 	void WriteRegister(ubyte val, ubyte index);
 	ubyte PaletteRead(ubyte2 index);
 	void WriteOAM_DMA(ubyte highByte);
+	//Returns the number of cycles to complete to finish rendering
+	int Render();
 private:
 	BUS& Bus;
 	ubyte Read(ubyte2 address);
