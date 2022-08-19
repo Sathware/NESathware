@@ -45,8 +45,8 @@ ubyte CPU_6052::NMI()
 {
 	//unmaskable interrupt handlers are stored in another address
 	//and are not affected by Interrupt disable flag
-	PushOntoStack(High(ProgramCounter));
-	PushOntoStack(Low(ProgramCounter));
+	PushOntoStack(HighByte(ProgramCounter));
+	PushOntoStack(LowByte(ProgramCounter));
 	PushOntoStack(Status | Break | InterruptDisable);
 	//address of NMI interrupt handler
 	ubyte2 pInterruptHandlerLow = Read(0xfffa);
@@ -60,8 +60,8 @@ ubyte CPU_6052::IRQ()
 {
 	if (!IsSet(InterruptDisable))
 	{
-		PushOntoStack(High(ProgramCounter));
-		PushOntoStack(Low(ProgramCounter));
+		PushOntoStack(HighByte(ProgramCounter));
+		PushOntoStack(LowByte(ProgramCounter));
 		PushOntoStack(Status | Break | InterruptDisable);
 		//address of IRQ interrupt handler
 		ubyte2 pInterruptHandlerLow = Read(0xfffe);
@@ -99,7 +99,7 @@ CPU_6052::Operand CPU_6052::ABS()
 	ubyte2 low = Read(ProgramCounter);//get 1st operand byte immediately proceeding instruction byte
 	++ProgramCounter;
 	ubyte2 high = Read(ProgramCounter);//get 2nd operand byte
-	ubyte2 address = Combine(high, low);//combine low and high order bits to form full 16-bit address
+	ubyte2 address = CombineBytes(high, low);//combine low and high order bits to form full 16-bit address
 	++ProgramCounter;
 
 	return { address, 0 };
@@ -141,10 +141,10 @@ CPU_6052::Operand CPU_6052::IAX()
 	++ProgramCounter;
 	ubyte2 high = Read(ProgramCounter);//get 2nd operand byte
 	++ProgramCounter;
-	ubyte2 address = Combine(high, low);//combine low and high order bits to form full 16-bit address
+	ubyte2 address = CombineBytes(high, low);//combine low and high order bits to form full 16-bit address
 	
 	ubyte deltaCycles = 0;
-	if (High(address) != High(address + X_Register))
+	if (HighByte(address) != HighByte(address + X_Register))
 		deltaCycles = 1;//Increase cycle count if page boundary is crossed
 
 	return { ubyte2(address + X_Register), deltaCycles };//Like absolute but X_Register is added as offset
@@ -157,10 +157,10 @@ CPU_6052::Operand CPU_6052::IAY()
 	++ProgramCounter;
 	ubyte2 high = Read(ProgramCounter);//get 2nd operand byte
 	++ProgramCounter;
-	ubyte2 address = Combine(high, low);//combine low and high order bits to form full 16-bit 
+	ubyte2 address = CombineBytes(high, low);//combine low and high order bits to form full 16-bit 
 
 	ubyte deltaCycles = 0;
-	if (High(address) != High(address + Y_Register))
+	if (HighByte(address) != HighByte(address + Y_Register))
 		deltaCycles = 1;//Increase cycle count if page boundary is crossed
 
 	return { ubyte2(address + Y_Register), deltaCycles };//Like absolute but Y_Register is added as offset
@@ -182,7 +182,7 @@ CPU_6052::Operand CPU_6052::REL()
 		offset |= 0xff00;//preserve 2's complement representation
 
 	ubyte deltaCycles = 0;
-	if (High(ProgramCounter) != High(ProgramCounter + offset))
+	if (HighByte(ProgramCounter) != HighByte(ProgramCounter + offset))
 			deltaCycles = 1;
 
 	return { ubyte2(ProgramCounter + offset), deltaCycles };
@@ -197,7 +197,7 @@ CPU_6052::Operand CPU_6052::IIX()
 
 	ubyte2 addressLow = Read(pAddress);//Some address in page zero
 	ubyte2 addressHigh = Read(ubyte(pAddress + 1u));//The next address in page zero, or wraps around to beginning of page zero which is automatically handled by unsigned arithmetic
-	ubyte2 address = Combine(addressHigh, addressLow);
+	ubyte2 address = CombineBytes(addressHigh, addressLow);
 
 	return { address, 0 };
 }
@@ -210,10 +210,10 @@ CPU_6052::Operand CPU_6052::IIY()
 
 	ubyte2 addressLow = Read(pAddress);
 	ubyte2 addressHigh = Read(ubyte(pAddress + 1u));//Wraps pAddress as per specification which is handled automatically by unsigned arithmetic
-	ubyte2 address = Combine(addressHigh, addressLow);
+	ubyte2 address = CombineBytes(addressHigh, addressLow);
 
 	ubyte deltaCycles = 0;
-	if (High(address) != High(address + Y_Register))
+	if (HighByte(address) != HighByte(address + Y_Register))
 		deltaCycles = 1;//Increase cycle count if page boundary is crossed
 
 	return { ubyte2(address + Y_Register), deltaCycles };//Add Y_Register as offset
@@ -226,13 +226,13 @@ CPU_6052::Operand CPU_6052::ABI()
 	++ProgramCounter;
 	ubyte2 pAddressHigh = Read(ProgramCounter);
 
-	ubyte2 pAddress = Combine(pAddressHigh, pAddressLow);
+	ubyte2 pAddress = CombineBytes(pAddressHigh, pAddressLow);
 
-	ubyte2 pAddressNext = Combine(pAddressHigh, ubyte(pAddressLow + 1));//Simulate bug where address Read(xxff + 1) actually gives Read(xx00)
+	ubyte2 pAddressNext = CombineBytes(pAddressHigh, ubyte(pAddressLow + 1));//Simulate bug where address Read(xxff + 1) actually gives Read(xx00)
 
 	ubyte2 addressLow = Read(pAddress);
 	ubyte2 addressHigh = Read(pAddressNext);
-	ubyte2 address = Combine(addressHigh, addressLow);
+	ubyte2 address = CombineBytes(addressHigh, addressLow);
 
 	return { address, 0 };
 }
@@ -244,7 +244,7 @@ CPU_6052::Operand CPU_6052::ABJ()
 	++ProgramCounter;
 	ubyte2 high = Read(ProgramCounter);//get 2nd operand byte
 	++ProgramCounter;
-	ubyte2 address = Combine(high, low);//combine low and high order bits to form full 16-bit address
+	ubyte2 address = CombineBytes(high, low);//combine low and high order bits to form full 16-bit address
 	return { address, 0 };
 }
 
@@ -683,8 +683,8 @@ void CPU_6052::JSR(Operand& operand)
 {
 	//JSR stores the last byte of the instruction on the stack
 	//In other words ProgramCounter - 1
-	PushOntoStack(High(ProgramCounter - 1));
-	PushOntoStack(Low(ProgramCounter - 1));
+	PushOntoStack(HighByte(ProgramCounter - 1));
+	PushOntoStack(LowByte(ProgramCounter - 1));
 	ProgramCounter = operand.address;
 }
 
@@ -693,7 +693,7 @@ void CPU_6052::RTS(Operand& operand)
 	ubyte2 returnAddressLow = PopOffStack();
 	ubyte2 returnAddressHigh = PopOffStack();
 
-	ubyte2 returnAddress = Combine(returnAddressHigh, returnAddressLow);
+	ubyte2 returnAddress = CombineBytes(returnAddressHigh, returnAddressLow);
 	ProgramCounter = returnAddress + 1;//As per specification the RTS corrects the JSR by returning the returnAddress + 1 to point to the next instruction
 }
 
@@ -726,12 +726,12 @@ void CPU_6052::BRK(Operand&)
 	//ProgramCounter + 1 is pushed onto the stack
 
 	++ProgramCounter;//Point to 2nd byte after BRK opcode
-	PushOntoStack(High(ProgramCounter));
-	PushOntoStack(Low(ProgramCounter));
+	PushOntoStack(HighByte(ProgramCounter));
+	PushOntoStack(LowByte(ProgramCounter));
 	PushOntoStack(Status | Break);
 	ubyte2 pInterruptHandlerLow = Read(0xfffe);
 	ubyte2 pInterruptHandlerHigh = Read(0xffff);
-	ubyte2 pInterruptHandler = Combine(pInterruptHandlerHigh, pInterruptHandlerLow);
+	ubyte2 pInterruptHandler = CombineBytes(pInterruptHandlerHigh, pInterruptHandlerLow);
 	ProgramCounter = pInterruptHandler;
 }
 
@@ -742,7 +742,7 @@ void CPU_6052::RTI(Operand&)
 
 	ubyte2 returnLow = PopOffStack();
 	ubyte2 returnHigh = PopOffStack();
-	ubyte2 returnAddress = Combine(returnHigh, returnLow);
+	ubyte2 returnAddress = CombineBytes(returnHigh, returnLow);
 	ProgramCounter = returnAddress;
 }
 

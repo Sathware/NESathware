@@ -21,18 +21,18 @@ static bool GetMSB(const ubyte data)
 }
 
 //Return lower byte of byte2 e.g. Low(0xAABB) = 0xBB
-static ubyte Low(const ubyte2 val)
+static ubyte LowByte(const ubyte2 val)
 {
 	return (ubyte)(val & 0x00FF);
 }
 
 //Return higher byte byte2 e.g. High(0xAABB) = 0xAA
-static ubyte High(const ubyte2 val)
+static ubyte HighByte(const ubyte2 val)
 {
 	return (ubyte)(val >> 8);
 }
 
-static ubyte2 Combine(const ubyte2 high, const ubyte2 low)
+static ubyte2 CombineBytes(const ubyte2 high, const ubyte2 low)
 {
 	return (high << 8) | low;
 }
