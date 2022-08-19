@@ -44,26 +44,29 @@ struct Mapper0 : public Mapper
 	{
 		if (isBitOn<3>(header.flags6))
 		{
+			VRAM.resize(0x1000);
 			//Four screen mirroring
 			Mirroring = [this](ubyte2 address)->ubyte&
 			{
-				return this->CHRROM.at(address); 
+				return VRAM.at(address); 
 			};
 		}
 		else if (isBitOn<0>(header.flags6))
 		{
+			VRAM.resize(0x0800);
 			//Vertical mirroring
 			Mirroring = [this](ubyte2 address)->ubyte&
 			{
-				return this->CHRROM.at(address % 0x0800); 
+				return VRAM.at(address % 0x0800); 
 			};
 		}
 		else
 		{
+			VRAM.resize(0x0800);
 			//Horizontal mirroring
 			Mirroring = [this](ubyte2 address)->ubyte&
 			{
-				return this->CHRROM.at(((address / 0x2800) * 0x0400) | (address & 0x00ff)); 
+				return VRAM.at(((address / 0x2800) * 0x0400) | (address & 0x00ff)); 
 			};
 		}
 	}
@@ -90,6 +93,7 @@ struct Mapper0 : public Mapper
 	}
 
 	std::function<ubyte& (ubyte2)> Mirroring;
+	std::vector<ubyte> VRAM;
 };
 
 ////Source: "https://www.nesdev.org/wiki/MMC1"
