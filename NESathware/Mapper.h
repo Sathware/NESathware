@@ -23,6 +23,7 @@ struct Mapper
 		: header(header)
 	{}
 	virtual ubyte& Read(ubyte2 address) = 0;
+	virtual void Write(ubyte val, ubyte2 address) = 0;
 	Header header;
 };
 
@@ -42,6 +43,11 @@ struct Mapper0 : public Mapper
 			return ROM.at((size_t)(address % (header.size_PRGRom > 1 ? 0x8000 : 0x4000)) + 0x3fe0u);//Memory Mirroring according to the iNES mapper 0 specification
 		else
 			return ROM.at(address);
+	}
+
+	void Write(ubyte val, ubyte2 address)
+	{
+		Read(address) = val;
 	}
 
 	std::array<ubyte, 0xbfe0u> ROM = { 0 };

@@ -8,6 +8,7 @@ class Cartridge
 public:
 	Cartridge(class BUS& bus, std::string filename);
 	ubyte& Read(ubyte2 address);
+	void Write(ubyte val, ubyte2 address);
 private:
 	BUS& bus;
 	std::unique_ptr<Mapper> mpMapper;

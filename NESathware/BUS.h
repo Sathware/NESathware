@@ -12,8 +12,10 @@ class BUS
 public:
 	//Maps data appropriately to the various components depending on the address
 	//Source: "https://www.nesdev.org/wiki/CPU_memory_map"
-	ubyte& ReadCPU(ubyte2 address);
+	ubyte ReadCPU(ubyte2 address);
 	void WriteCPU(ubyte val, ubyte2 address);
+	ubyte ReadPPU(ubyte2 address);
+	void WritePPU(ubyte val, ubyte2 address);
 public:
 
 	CPU_6052* mpCPU = nullptr;
@@ -21,7 +23,9 @@ public:
 	APU_2A03* mpAPU = nullptr;
 	Cartridge* mpCartridge = nullptr;
 
-	//2KB onboard ram and rest of address space
-	std::array<ubyte, 0x0800u> mRAM = { 0 };
+	//2KB onboard CPU RAM
+	std::array<ubyte, 2048u> mRAM = { 0 };
+	//2KB onboard PPU VRAM
+	std::array<ubyte, 2048u> mVRAM = { 0 };
 };
 

@@ -27,3 +27,8 @@ ubyte& Cartridge::Read(ubyte2 address)
 {
 	return mpMapper->Read(address);
 }
+
+void Cartridge::Write(ubyte val, ubyte2 address)
+{
+	mpMapper->Write(val, address);
+}

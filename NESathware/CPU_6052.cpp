@@ -73,7 +73,7 @@ ubyte CPU_6052::IRQ()
 	return 0;
 }
 
-ubyte& CPU_6052::Read(ubyte2 address)
+ubyte CPU_6052::Read(ubyte2 address)
 {
 	return Bus.ReadCPU(address);
 }
@@ -456,8 +456,9 @@ void CPU_6052::DEY(Operand&)
 
 void CPU_6052::INC(Operand& operand)
 {
-	ubyte& data = Read(operand.address);
+	ubyte data = Read(operand.address);
 	++data;
+	Write(data, operand.address);
 	operand.deltaCycles = 0;
 
 	SetFlagTo(Negative, GetMSB(data));
@@ -466,8 +467,9 @@ void CPU_6052::INC(Operand& operand)
 
 void CPU_6052::DEC(Operand& operand)
 {
-	ubyte& data = Read(operand.address);
+	ubyte data = Read(operand.address);
 	--data;
+	Write(data, operand.address);
 	operand.deltaCycles = 0;
 
 	SetFlagTo(Negative, GetMSB(data));
@@ -512,9 +514,10 @@ void CPU_6052::BIT(Operand& operand)
 
 void CPU_6052::LSR(Operand& operand)
 {
-	ubyte& data = Read(operand.address);
+	ubyte data = Read(operand.address);
 	SetFlagTo(Carry, (data & 1) != 0);
 	data = data >> 1;
+	Write(data, operand.address);
 	SetFlagTo(Zero, data == 0);
 	RemoveFlag(Negative);
 
@@ -531,9 +534,10 @@ void CPU_6052::LSRA(Operand&)
 
 void CPU_6052::ASL(Operand& operand)
 {
-	ubyte& data = Read(operand.address);
+	ubyte data = Read(operand.address);
 	SetFlagTo(Carry, GetMSB(data));
 	data = data << 1;
+	Write(data, operand.address);
 	SetFlagTo(Negative, GetMSB(data));
 	SetFlagTo(Zero, data == 0);
 
@@ -550,11 +554,12 @@ void CPU_6052::ASLA(Operand&)
 
 void CPU_6052::ROL(Operand& operand)
 {
-	ubyte& data = Read(operand.address);
+	ubyte data = Read(operand.address);
 	ubyte new0bit = IsSet(Carry);//new bit 0 comes from the carry flag for ROL
 	SetFlagTo(Carry, GetMSB(data));//old bit 7 is used to update carry
 	data = data << 1;
 	data |= new0bit;
+	Write(data, operand.address);
 	SetFlagTo(Zero, data == 0);
 	SetFlagTo(Negative, GetMSB(data));
 
@@ -573,11 +578,12 @@ void CPU_6052::ROLA(Operand&)
 
 void CPU_6052::ROR(Operand& operand)
 {
-	ubyte& data = Read(operand.address);
+	ubyte data = Read(operand.address);
 	ubyte new7bit = (IsSet(Carry) << 7);//new bit 7 comes from the carry flag for ROR
 	SetFlagTo(Carry, (data & 1) != 0);//old 0 bit  is used to update carry
 	data = data >> 1;
 	data |= new7bit;
+	Write(data, operand.address);
 	SetFlagTo(Zero, data == 0);
 	SetFlagTo(Negative, GetMSB(data));
 
