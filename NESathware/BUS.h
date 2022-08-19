@@ -13,8 +13,13 @@ public:
 	//Maps data appropriately to the various components depending on the address
 	//Source: "https://www.nesdev.org/wiki/CPU_memory_map"
 	ubyte ReadCPU(ubyte2 address);
+
+	ubyte* GetData(ubyte2 address);
+
 	void WriteCPU(ubyte val, ubyte2 address);
+
 	ubyte ReadPPU(ubyte2 address);
+
 	void WritePPU(ubyte val, ubyte2 address);
 public:
 

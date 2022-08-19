@@ -14,21 +14,39 @@ Cartridge::Cartridge(BUS& bus, std::string filename)
 
 	file.read(reinterpret_cast<char*>(&header), 16);
 
+	size_t SizeInBytesPRGROM = (size_t)header.size_PRGRom * 16384;
+	PRGROM.resize(SizeInBytesPRGROM);
+	file.read(reinterpret_cast<char*>(PRGROM.data()), SizeInBytesPRGROM);//0x8000 is mapped to 0x3fe0 in cartridge space
+
+	size_t SizeInBytesCHRROM = (size_t)header.size_CHRRom * 8192;
+	CHRROM.resize(SizeInBytesCHRROM);
+	file.read(reinterpret_cast<char*>(CHRROM.data()), SizeInBytesCHRROM);
+
 	ubyte mapperNum = (header.flags7 & 0xf0) | (header.flags6 >> 4);
 
 	switch (mapperNum)
 	{
-	case 0: mpMapper = std::make_unique<Mapper0>(header, file); break;
+	case 0: mpMapper = std::make_unique<Mapper0>(header, PRGROM, CHRROM, file); break;
 	//case 1: mpMapper = std::make_unique<Mapper1>(header, file); break;
 	}
 }
 
-ubyte& Cartridge::Read(ubyte2 address)
+ubyte& Cartridge::ReadCPU(ubyte2 address)
 {
-	return mpMapper->Read(address);
+	return mpMapper->ReadCPU(address);
 }
 
-void Cartridge::Write(ubyte val, ubyte2 address)
+void Cartridge::WriteCPU(ubyte val, ubyte2 address)
 {
-	mpMapper->Write(val, address);
+	mpMapper->WriteCPU(val, address);
+}
+
+ubyte& Cartridge::ReadPPU(ubyte2 address)
+{
+	return mpMapper->ReadPPU(address);
+}
+
+void Cartridge::WritePPU(ubyte val, ubyte2 address)
+{
+	mpMapper->WritePPU(val, address);
 }

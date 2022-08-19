@@ -9,8 +9,14 @@ ubyte PPU_2C02::Read(ubyte2 address)
 ubyte PPU_2C02::PaletteRead(ubyte2 index)
 {
 	//Palette reads immediately fill the bus, bypassing the internal read buffer
-	InternalBusLatch = PaletteColors.at(index);
+	InternalBusLatch = FramePalette.at(index);
 	return InternalBusLatch;
+}
+
+void PPU_2C02::WriteOAM_DMA(ubyte highByte)
+{
+	ubyte2 startAddress = CombineBytes(highByte, 0x0000);
+	memcpy(Bus.GetData(startAddress), OAM.data(), 256u);
 }
 
 void PPU_2C02::Write(ubyte val, ubyte2 address)

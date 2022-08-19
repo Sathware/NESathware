@@ -1,7 +1,9 @@
 #pragma once
 #include "CommonTypes.h"
 #include <array>
+#include <vector>
 #include <fstream>
+#include <functional>
 
 struct Header
 {
@@ -19,38 +21,75 @@ struct Header
 struct Mapper
 {
 	virtual ~Mapper() = default;
-	Mapper(Header& header)
-		: header(header)
+	Mapper(Header& header, std::vector<ubyte>& PRGROM, std::vector<ubyte>& CHRROM)
+		: header(header), PRGROM(PRGROM), CHRROM(CHRROM)
 	{}
-	virtual ubyte& Read(ubyte2 address) = 0;
-	virtual void Write(ubyte val, ubyte2 address) = 0;
+	virtual ubyte& ReadCPU(ubyte2 address) = 0;
+	virtual void WriteCPU(ubyte val, ubyte2 address) = 0;
+	virtual ubyte& ReadPPU(ubyte2 address) = 0;
+	virtual void WritePPU(ubyte val, ubyte2 address) = 0;
 	Header header;
+	std::vector<ubyte>& PRGROM;
+	std::vector<ubyte>& CHRROM;
 };
+
+
 
 //Source: "https://www.nesdev.org/wiki/NROM"
 //Convert from CPU address to internal storage indexes by subtracting 0x4020 i.e. the range [0x4020, 0xffff] -> [0x0000, 0xbfdf]
 struct Mapper0 : public Mapper
 {
-	Mapper0(Header& header, std::ifstream& fileStream)
-		: Mapper(header)
+	Mapper0(Header& header, std::vector<ubyte>& PRGROM, std::vector<ubyte>& CHRROM, std::ifstream& fileStream)
+		: Mapper(header, PRGROM, CHRROM)
 	{
-		fileStream.read(reinterpret_cast<char*>(&ROM.data()[0x3fe0u]), (size_t)header.size_PRGRom * 16384);//iNES mapper 0 corresponds to the program rom beginning at 0x8000 from the CPU's view, which is internally stored in catridge space at 0x3fe0u
+		if (isBitOn<3>(header.flags6))
+		{
+			//Four screen mirroring
+			Mirroring = [this](ubyte2 address)->ubyte&
+			{
+				return this->CHRROM.at(address); 
+			};
+		}
+		else if (isBitOn<0>(header.flags6))
+		{
+			//Vertical mirroring
+			Mirroring = [this](ubyte2 address)->ubyte&
+			{
+				return this->CHRROM.at(address % 0x0800); 
+			};
+		}
+		else
+		{
+			//Horizontal mirroring
+			Mirroring = [this](ubyte2 address)->ubyte&
+			{
+				return this->CHRROM.at(((address / 0x2800) * 0x0400) | (address & 0x00ff)); 
+			};
+		}
 	}
-	
-	ubyte& Read(ubyte2 address) override
+
+	ubyte& ReadCPU(ubyte2 address) override
 	{
 		if (address >= 0x8000u)//If trying to access program ROM (0x8000) -> (0x8000 - 0x4020), absolute and internal cartridge address respectively
-			return ROM.at((size_t)(address % (header.size_PRGRom > 1 ? 0x8000 : 0x4000)) + 0x3fe0u);//Memory Mirroring according to the iNES mapper 0 specification
+			return PRGROM.at((size_t)(address % (header.size_PRGRom > 1 ? 0x8000 : 0x4000)));//Memory Mirroring according to the iNES mapper 0 specification
 		else
-			return ROM.at(address);
+			return PRGROM.at(address);
 	}
 
-	void Write(ubyte val, ubyte2 address)
+	void WriteCPU(ubyte val, ubyte2 address)
 	{
-		Read(address) = val;
 	}
 
-	std::array<ubyte, 0xbfe0u> ROM = { 0 };
+	ubyte& ReadPPU(ubyte2 address)
+	{
+		return Mirroring(address);
+	}
+
+	void WritePPU(ubyte val, ubyte2 address)
+	{
+	}
+
+	std::function<ubyte& (ubyte2)> Mirroring;
 };
 
 ////Source: "https://www.nesdev.org/wiki/MMC1"

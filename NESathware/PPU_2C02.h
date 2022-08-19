@@ -11,6 +11,7 @@ public:
 	ubyte ReadRegister(ubyte index);
 	void WriteRegister(ubyte val, ubyte index);
 	ubyte PaletteRead(ubyte2 index);
+	void WriteOAM_DMA(ubyte highByte);
 private:
 	BUS& Bus;
 	ubyte Read(ubyte2 address);
@@ -45,9 +46,9 @@ private:
 	bool IsVBLANK();
 
 	/* Palette */
-	std::array<ubyte, 32u> PaletteColors = { 0 };//Program selected colors from Palette
+	std::array<ubyte, 32u> FramePalette = { 0 };//Program selected colors from Palette
 	//Internal Full Color Palette in RGBA format
-	const std::array<unsigned int, 64u> Palette = 
+	const std::array<unsigned int, 64u> SystemPalette = 
 	{
 		0x7C7C7CFFu,
 		0x0000FCFFu,

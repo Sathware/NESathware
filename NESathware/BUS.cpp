@@ -27,7 +27,25 @@ ubyte BUS::ReadCPU(ubyte2 address)
 	else if (address <= 0xffff)
 	{
 		//Cartridge space
-		return mpCartridge->Read(address);
+		return mpCartridge->ReadCPU(address);
+	}
+}
+
+ubyte* BUS::GetData(ubyte2 address)
+{
+	//0x2000 - 256
+	if (address < 0x1f00)
+	{
+		ubyte2 index = address % 0x0800u;
+		return &mRAM.at(index);
+	}
+	else if (address < 0x4020)
+	{
+		throw std::runtime_error("Tried to use invalid DMA buffer copy");
+	}
+	else if (address <= 0xff00)
+	{
+		return &mpCartridge->ReadCPU(address);
 	}
 }
 
@@ -48,6 +66,8 @@ void BUS::WriteCPU(ubyte val, ubyte2 address)
 	else if (address < 0x4018)
 	{
 		//APU and I/O registers
+		if (address == 0x4014)
+			mpPPU->WriteOAM_DMA(val);
 	}
 	else if (address < 0x4020)
 	{
@@ -57,7 +77,7 @@ void BUS::WriteCPU(ubyte val, ubyte2 address)
 	else if (address <= 0xffff)
 	{
 		//Cartridge space
-		mpCartridge->Write(val, address);
+		mpCartridge->WriteCPU(val, address);
 	}
 }
 
@@ -72,26 +92,32 @@ ubyte BUS::ReadPPU(ubyte2 address)
 	if (address < 0x1000)
 	{
 		//Pattern table 0
+		return mpCartridge->ReadPPU(address);
 	}
 	else if (address < 0x2000)
 	{
 		//pattern table 1
+		return mpCartridge->ReadPPU(address);
 	}
 	else if (address < 0x2400)
 	{
 		//Nametable 0
+		return mpCartridge->ReadPPU(address);
 	}
 	else if (address < 0x2800)
 	{
 		//Nametable 1
+		return mpCartridge->ReadPPU(address);
 	}
 	else if (address < 0x2c00)
 	{
 		//Nametable 2
+		return mpCartridge->ReadPPU(address);
 	}
 	else if (address < 0x3000)
 	{
 		//nametable 3
+		return mpCartridge->ReadPPU(address);
 	}
 	else if (address < 0x4000)
 	{
@@ -103,5 +129,4 @@ ubyte BUS::ReadPPU(ubyte2 address)
 
 void BUS::WritePPU(ubyte val, ubyte2 address)
 {
-	
 }
