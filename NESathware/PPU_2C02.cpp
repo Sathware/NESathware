@@ -30,15 +30,20 @@ ubyte PPU_2C02::ReadRegister(ubyte index)
 	switch (index)
 	{
 	case PPUSTATUS:
+	{
 		InternalBusLatch = StatusFlags &= 0x7f;//clear vblank bit
 		latchToggle = 0;//reset latch toggle
 		return InternalBusLatch;
+	}
 	case OAMDATA:
+	{
 		InternalBusLatch = OAM[AddressOAM];
 		if (!IsVBLANK())
 			++AddressOAM;
 		return InternalBusLatch;
+	}
 	case PPUDATA:
+	{
 		ubyte2 AddressPPU = CombineBytes(AddressHigh, AddressLow);
 		InternalBusLatch = InternalReadBuffer;
 		InternalReadBuffer = Read(AddressPPU);
@@ -46,8 +51,11 @@ ubyte PPU_2C02::ReadRegister(ubyte index)
 		AddressHigh = HighByte(AddressPPU);
 		AddressLow = LowByte(AddressPPU);
 		return InternalBusLatch;
+	}
 	default:
+	{
 		return InternalBusLatch;
+	}
 	}
 }
 
@@ -57,31 +65,45 @@ void PPU_2C02::WriteRegister(ubyte val, ubyte index)
 	switch (index)
 	{
 	case PPUCTRL:
+	{
 		ControlRegister = val;
 		return;
+	}
 	case PPUMASK:
+	{
 		MaskRegister = val;
 		return;
+	}
 	case PPUSTATUS:
 		return;
 	case OAMADDR:
+	{
 		AddressOAM = val;
+	}
 	case OAMDATA:
+	{
 		OAM[AddressOAM] = val;
 		++AddressOAM;
+	}
 	case PPUSCROLL:
+	{
 		latchToggle ? ScrollY = val : ScrollX = val;
 		latchToggle ^= 1;
 		return;
+	}
 	case PPUADDR:
+	{
 		latchToggle ? AddressLow = val : AddressHigh = val;
 		latchToggle ^= 1;
 		return;
+	}
 	case PPUDATA:
+	{
 		ubyte2 AddressPPU = CombineBytes(AddressHigh, AddressLow);
 		Write(val, AddressPPU);
 		AddressPPU += isBitOn<2>(ControlRegister) ? 32 : 1;
 		AddressHigh = HighByte(AddressPPU);
 		AddressLow = LowByte(AddressPPU);
+	}
 	}
 }

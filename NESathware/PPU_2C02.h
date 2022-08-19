@@ -33,86 +33,86 @@ private:
 	ubyte InternalReadBuffer = 0;//Emulate internal read buffer of 2C02
 	bool latchToggle = 0;//Emulate toggle used by scroll and address
 
-	ubyte ControlRegister;
-	ubyte MaskRegister;
-	ubyte StatusFlags;
-	ubyte ScrollX;
-	ubyte ScrollY;
-	ubyte AddressHigh;
-	ubyte AddressLow; 
+	ubyte ControlRegister = 0;
+	ubyte MaskRegister = 0;
+	ubyte StatusFlags = 0;
+	ubyte ScrollX = 0;
+	ubyte ScrollY = 0;
+	ubyte AddressHigh = 0;
+	ubyte AddressLow = 0; 
 
 	/*Helper Functions */
 	bool IsVBLANK();
 
 	/* Palette */
-	std::array<ubyte, 32u> PaletteColors;//Program selected colors from Palette
-	//Internal Full Color Palette
-	const std::array<ubyte, 64u> Palette = 
+	std::array<ubyte, 32u> PaletteColors = { 0 };//Program selected colors from Palette
+	//Internal Full Color Palette in RGBA format
+	const std::array<unsigned int, 64u> Palette = 
 	{
-		0x7C7C7C,
-		0x0000FC,
-		0x0000BC,
-		0x4428BC,
-		0x940084,
-		0xA80020,
-		0xA81000,
-		0x881400,
-		0x503000,
-		0x007800,
-		0x006800,
-		0x005800,
-		0x004058,
-		0x000000,
-		0x000000,
-		0x000000,
-		0xBCBCBC,
-		0x0078F8,
-		0x0058F8,
-		0x6844FC,
-		0xD800CC,
-		0xE40058,
-		0xF83800,
-		0xE45C10,
-		0xAC7C00,
-		0x00B800,
-		0x00A800,
-		0x00A844,
-		0x008888,
-		0x000000,
-		0x000000,
-		0x000000,
-		0xF8F8F8,
-		0x3CBCFC,
-		0x6888FC,
-		0x9878F8,
-		0xF878F8,
-		0xF85898,
-		0xF87858,
-		0xFCA044,
-		0xF8B800,
-		0xB8F818,
-		0x58D854,
-		0x58F898,
-		0x00E8D8,
-		0x787878,
-		0x000000,
-		0x000000,
-		0xFCFCFC,
-		0xA4E4FC,
-		0xB8B8F8,
-		0xD8B8F8,
-		0xF8B8F8,
-		0xF8A4C0,
-		0xF0D0B0,
-		0xFCE0A8,
-		0xF8D878,
-		0xD8F878,
-		0xB8F8B8,
-		0xB8F8D8,
-		0x00FCFC,
-		0xF8D8F8,
-		0x000000,
-		0x000000
+		0x7C7C7CFFu,
+		0x0000FCFFu,
+		0x0000BCFFu,
+		0x4428BCFFu,
+		0x940084FFu,
+		0xA80020FFu,
+		0xA81000FFu,
+		0x881400FFu,
+		0x503000FFu,
+		0x007800FFu,
+		0x006800FFu,
+		0x005800FFu,
+		0x004058FFu,
+		0x000000FFu,
+		0x000000FFu,
+		0x000000FFu,
+		0xBCBCBCFFu,
+		0x0078F8FFu,
+		0x0058F8FFu,
+		0x6844FCFFu,
+		0xD800CCFFu,
+		0xE40058FFu,
+		0xF83800FFu,
+		0xE45C10FFu,
+		0xAC7C00FFu,
+		0x00B800FFu,
+		0x00A800FFu,
+		0x00A844FFu,
+		0x008888FFu,
+		0x000000FFu,
+		0x000000FFu,
+		0x000000FFu,
+		0xF8F8F8FFu,
+		0x3CBCFCFFu,
+		0x6888FCFFu,
+		0x9878F8FFu,
+		0xF878F8FFu,
+		0xF85898FFu,
+		0xF87858FFu,
+		0xFCA044FFu,
+		0xF8B800FFu,
+		0xB8F818FFu,
+		0x58D854FFu,
+		0x58F898FFu,
+		0x00E8D8FFu,
+		0x787878FFu,
+		0x000000FFu,
+		0x000000FFu,
+		0xFCFCFCFFu,
+		0xA4E4FCFFu,
+		0xB8B8F8FFu,
+		0xD8B8F8FFu,
+		0xF8B8F8FFu,
+		0xF8A4C0FFu,
+		0xF0D0B0FFu,
+		0xFCE0A8FFu,
+		0xF8D878FFu,
+		0xD8F878FFu,
+		0xB8F8B8FFu,
+		0xB8F8D8FFu,
+		0x00FCFCFFu,
+		0xF8D8F8FFu,
+		0x000000FFu,
+		0x000000FFu
 	};
 
 	/* OAM */
@@ -124,7 +124,7 @@ private:
 		ubyte PosLeftX;
 	};
 	
-	std::array<ubyte, 256u> OAM;
-	ubyte AddressOAM;
+	std::array<ubyte, 256u> OAM = { 0 };
+	ubyte AddressOAM = 0;
 };
 
