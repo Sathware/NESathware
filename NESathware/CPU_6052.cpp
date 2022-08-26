@@ -2,23 +2,18 @@
 #include <string>
 #include "BUS.h"
 #include <iostream>
-#include <iomanip>
+#include <format>
 
 
 /* IMPORTANT NOTE: INC, DEC, LSR, ASL, ROL, ROR simulate data reads even though they modify the data, which may or may not cause issues with PPU addressing */
 
 ubyte CPU_6052::Execute()
 {
-	static int cycleCount = 0;
+	//static int cycleCount = 0;
 	ubyte opcode = Read(ProgramCounter);
 	const Instruction& instruction = Instructions[opcode];
 	
-	if (ProgramCounter ==/* 0xdbb5u*/0xc66eu)
-		int x = 5;//Something to put a break point on
-	
-	std::cout << "Memory: " << "0x" << std::hex << std::setfill('0') << std::setw(4) << (unsigned int)ProgramCounter;
-	std::cout << "   Opcode: " << " 0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)opcode;
-	std::cout << "   Name: " << instruction.Name;
+	std::string debugString = std::format("Memory: {:#06x}    Opcode: {:#04x}    Name: {}", ProgramCounter, opcode, instruction.Name);
 	
 	if (instruction.Operation == nullptr)
 		throw std::runtime_error("Invalid Opcode!");
@@ -26,10 +21,10 @@ ubyte CPU_6052::Execute()
 	Operand operand = (this->*instruction.GetOperand)();
 	(this->*instruction.Operation)(operand);
 	
-	std::cout << "   Data: " << "0x" << std::hex << std::setfill('0') << std::setw(4) << (unsigned int)operand.address;
+	//cycleCount += instruction.baseCycles + operand.deltaCycles;
+	debugString = std::format("{}    DataAddress: {:#06x}\n", debugString, operand.address);
+	std::cout << debugString;
 
-	cycleCount += instruction.baseCycles + operand.deltaCycles;
-	std::cout << "   Cyc: " << std::dec << cycleCount << std::endl;
 	return instruction.baseCycles + operand.deltaCycles;
 }
 
@@ -73,7 +68,7 @@ ubyte CPU_6052::IRQ()
 	return 0;
 }
 
-ubyte& CPU_6052::Read(ubyte2 address)
+ubyte CPU_6052::Read(ubyte2 address)
 {
 	return Bus.ReadCPU(address);
 }
@@ -456,8 +451,9 @@ void CPU_6052::DEY(Operand&)
 
 void CPU_6052::INC(Operand& operand)
 {
-	ubyte& data = Read(operand.address);
+	ubyte data = Read(operand.address);
 	++data;
+	Write(data, operand.address);
 	operand.deltaCycles = 0;
 
 	SetFlagTo(Negative, GetMSB(data));
@@ -466,8 +462,9 @@ void CPU_6052::INC(Operand& operand)
 
 void CPU_6052::DEC(Operand& operand)
 {
-	ubyte& data = Read(operand.address);
+	ubyte data = Read(operand.address);
 	--data;
+	Write(data, operand.address);
 	operand.deltaCycles = 0;
 
 	SetFlagTo(Negative, GetMSB(data));
@@ -512,9 +509,10 @@ void CPU_6052::BIT(Operand& operand)
 
 void CPU_6052::LSR(Operand& operand)
 {
-	ubyte& data = Read(operand.address);
+	ubyte data = Read(operand.address);
 	SetFlagTo(Carry, (data & 1) != 0);
 	data = data >> 1;
+	Write(data, operand.address);
 	SetFlagTo(Zero, data == 0);
 	RemoveFlag(Negative);
 
@@ -531,9 +529,10 @@ void CPU_6052::LSRA(Operand&)
 
 void CPU_6052::ASL(Operand& operand)
 {
-	ubyte& data = Read(operand.address);
+	ubyte data = Read(operand.address);
 	SetFlagTo(Carry, GetMSB(data));
 	data = data << 1;
+	Write(data, operand.address);
 	SetFlagTo(Negative, GetMSB(data));
 	SetFlagTo(Zero, data == 0);
 
@@ -550,11 +549,12 @@ void CPU_6052::ASLA(Operand&)
 
 void CPU_6052::ROL(Operand& operand)
 {
-	ubyte& data = Read(operand.address);
+	ubyte data = Read(operand.address);
 	ubyte new0bit = IsSet(Carry);//new bit 0 comes from the carry flag for ROL
 	SetFlagTo(Carry, GetMSB(data));//old bit 7 is used to update carry
 	data = data << 1;
 	data |= new0bit;
+	Write(data, operand.address);
 	SetFlagTo(Zero, data == 0);
 	SetFlagTo(Negative, GetMSB(data));
 
@@ -573,11 +573,12 @@ void CPU_6052::ROLA(Operand&)
 
 void CPU_6052::ROR(Operand& operand)
 {
-	ubyte& data = Read(operand.address);
+	ubyte data = Read(operand.address);
 	ubyte new7bit = (IsSet(Carry) << 7);//new bit 7 comes from the carry flag for ROR
 	SetFlagTo(Carry, (data & 1) != 0);//old 0 bit  is used to update carry
 	data = data >> 1;
 	data |= new7bit;
+	Write(data, operand.address);
 	SetFlagTo(Zero, data == 0);
 	SetFlagTo(Negative, GetMSB(data));
 

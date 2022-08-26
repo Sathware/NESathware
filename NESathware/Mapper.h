@@ -22,7 +22,10 @@ struct Mapper
 	Mapper(Header& header)
 		: header(header)
 	{}
-	virtual ubyte& Read(ubyte2 address) = 0;
+	virtual ubyte ReadCPU(ubyte2 address) const = 0;
+	virtual ubyte ReadPPU(ubyte2 address) const = 0;
+	virtual void WriteCPU(ubyte val, ubyte2 address) = 0;
+	virtual void WritePPU(ubyte val, ubyte2 address) = 0;
 	Header header;
 };
 
@@ -33,18 +36,50 @@ struct Mapper0 : public Mapper
 	Mapper0(Header& header, std::ifstream& fileStream)
 		: Mapper(header)
 	{
-		fileStream.read(reinterpret_cast<char*>(&ROM.data()[0x3fe0u]), (size_t)header.size_PRGRom * 16384);//iNES mapper 0 corresponds to the program rom beginning at 0x8000 from the CPU's view, which is internally stored in catridge space at 0x3fe0u
-	}
-	
-	ubyte& Read(ubyte2 address) override
-	{
-		if (address >= 0x8000u)//If trying to access program ROM (0x8000) -> (0x8000 - 0x4020), absolute and internal cartridge address respectively
-			return ROM.at((size_t)(address % (header.size_PRGRom > 1 ? 0x8000 : 0x4000)) + 0x3fe0u);//Memory Mirroring according to the iNES mapper 0 specification
-		else
-			return ROM.at(address);
+		//Fill PRG ROM
+		fileStream.read(reinterpret_cast<char*>(PRG_ROM), (size_t)header.size_PRGRom * 0x4000u);
+		//Fill CHR ROM
+		fileStream.read(reinterpret_cast<char*>(CHR_ROM), (size_t)header.size_CHRRom * 0x2000u);
 	}
 
-	std::array<ubyte, 0xbfe0u> ROM = { 0 };
+	ubyte ReadCPU(ubyte2 address) const override
+	{
+		//CPU memory addresses 0x8000 - 0xffff map to PRG ROM
+		assert(address >= 0x8000u && address <= 0xffff);
+
+		//If PRG ROM is 16KB then mirror
+		ubyte2 internalAddress = (address - 0x8000u) % ((ubyte2)header.size_PRGRom * 0x4000u);
+		return PRG_ROM[internalAddress];
+	}
+
+	void WriteCPU(ubyte val, ubyte2 address) override 
+	{
+		//CPU memory addresses 0x8000 - 0xffff map to PRG ROM
+		assert(address >= 0x8000u && address <= 0xffff);
+
+		//If PRG ROM is 16KB then mirror
+		ubyte2 internalAddress = (address - 0x8000u) % ((ubyte2)header.size_PRGRom * 0x4000u);
+		PRG_ROM[internalAddress] = val;
+	}
+
+	ubyte ReadPPU(ubyte2 address) const override
+	{
+		//Normally PPU memory addresses 0x0000 - 0x1fff map to CHR ROM
+		assert(address < 0x2000);
+		return CHR_ROM[address];
+	}
+
+	void WritePPU(ubyte val, ubyte2 address) override
+	{
+		//Normally PPU memory addresses 0x0000 - 0x1fff map to CHR ROM
+		assert(address < 0x2000);
+		CHR_ROM[address] = val;
+	}
+
+	//32KB PRG ROM
+	ubyte PRG_ROM[0x8000u];
+	//8KB CHR ROM
+	ubyte CHR_ROM[0x2000u];
 };
 
 ////Source: "https://www.nesdev.org/wiki/MMC1"

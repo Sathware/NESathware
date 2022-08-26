@@ -396,7 +396,7 @@ private:
 	}
 
 	//Read byte from 16-bit address
-	ubyte& Read(ubyte2 address);
+	ubyte Read(ubyte2 address);
 
 	//Write byte to 16-bit address
 	void Write(ubyte val, ubyte2 address);

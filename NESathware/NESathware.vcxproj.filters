@@ -33,7 +33,7 @@
     <ClCompile Include="APU_2A03.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Cartridge.cpp">
+    <ClCompile Include="Mapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -51,9 +51,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="APU_2A03.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Cartridge.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Mapper.h">
