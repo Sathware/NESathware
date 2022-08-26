@@ -42,7 +42,43 @@ struct Mapper0 : public Mapper
 	Mapper0(Header& header, std::vector<ubyte>& PRGROM, std::vector<ubyte>& CHRROM, std::ifstream& fileStream)
 		: Mapper(header, PRGROM, CHRROM)
 	{
-		if (isBitOn<3>(header.flags6))
+	}
+
+	ubyte& ReadCPU(ubyte2 address) override
+	{
+		if (address >= 0x8000u)//If trying to access program ROM (0x8000)
+			return PRGROM.at((size_t)(address % (header.size_PRGRom > 1 ? 0x8000 : 0x4000)));//Memory Mirroring according to the iNES mapper 0 specification
+	}
+
+	void WriteCPU(ubyte val, ubyte2 address)
+	{
+	}
+
+	ubyte& ReadPPU(ubyte2 address)
+	{
+		if (address < 0x2000)
+			return CHRROM.at(address);
+	}
+
+	void WritePPU(ubyte val, ubyte2 address)
+	{
+	}
+};
+
+////Source: "https://www.nesdev.org/wiki/MMC1"
+//struct Mapper1 : public Mapper
+//{
+//	Mapper1(Header& header, std::ifstream& fileStream)
+//		:Mapper(header)
+//	{
+//
+//	}
+//
+//
+//};
+
+/*
+* if (isBitOn<3>(header.flags6))
 		{
 			VRAM.resize(0x1000);
 			//Four screen mirroring
@@ -69,42 +105,4 @@ struct Mapper0 : public Mapper
 				return VRAM.at(((address / 0x2800) * 0x0400) | (address & 0x00ff)); 
 			};
 		}
-	}
-
-	ubyte& ReadCPU(ubyte2 address) override
-	{
-		if (address >= 0x8000u)//If trying to access program ROM (0x8000) -> (0x8000 - 0x4020), absolute and internal cartridge address respectively
-			return PRGROM.at((size_t)(address % (header.size_PRGRom > 1 ? 0x8000 : 0x4000)));//Memory Mirroring according to the iNES mapper 0 specification
-		else
-			return PRGROM.at(address);
-	}
-
-	void WriteCPU(ubyte val, ubyte2 address)
-	{
-	}
-
-	ubyte& ReadPPU(ubyte2 address)
-	{
-		return Mirroring(address);
-	}
-
-	void WritePPU(ubyte val, ubyte2 address)
-	{
-		Mirroring(address) = val;
-	}
-
-	std::function<ubyte& (ubyte2)> Mirroring;
-	std::vector<ubyte> VRAM;
-};
-
-////Source: "https://www.nesdev.org/wiki/MMC1"
-//struct Mapper1 : public Mapper
-//{
-//	Mapper1(Header& header, std::ifstream& fileStream)
-//		:Mapper(header)
-//	{
-//
-//	}
-//
-//
-//};
+*/

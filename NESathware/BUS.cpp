@@ -99,25 +99,25 @@ ubyte BUS::ReadPPU(ubyte2 address)
 		//pattern table 1 in CHR ROM
 		return mpCartridge->ReadPPU(address);
 	}
-	else if (address < 0x2400)
+	else if (address < 0x2400)//Hardcoded vertical mirroring temporarily
 	{
 		//Nametable 0 in VRAM
-		return mpCartridge->ReadPPU(address);
+		return mVRAM.at(address % 2000u);
 	}
 	else if (address < 0x2800)
 	{
 		//Nametable 1 in VRAM
-		return mpCartridge->ReadPPU(address);
+		return mVRAM.at(address % 2000u);
 	}
 	else if (address < 0x2c00)
 	{
 		//Nametable 2 in VRAM
-		return mpCartridge->ReadPPU(address);
+		return mVRAM.at(address % 0x2800u);
 	}
 	else if (address < 0x3000)
 	{
 		//nametable 3 in VRAM
-		return mpCartridge->ReadPPU(address);
+		return mVRAM.at(address % 0x2800u);
 	}
 	else if (address < 0x4000)
 	{

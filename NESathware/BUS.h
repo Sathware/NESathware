@@ -25,6 +25,11 @@ public:
 	ubyte ReadPPU(ubyte2 address);
 
 	void WritePPU(ubyte val, ubyte2 address);
+
+	void InvokeNMI()
+	{
+		mpCPU->NMI();
+	}
 public:
 
 	CPU_6052* mpCPU = nullptr;

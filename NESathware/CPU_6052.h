@@ -19,13 +19,13 @@ public:
 		Status(0)
 	{
 		//Reset();//Initialize CPU, simulates startup sequence
-		//SetFlag(InterruptDisable);
-		//ProgramCounter = programStartOverride;
+		SetFlag(InterruptDisable);
+		ProgramCounter = programStartOverride;
 	}
 
 	//Execute current instruction and move to next instruction
 	//return number of cycles to wait for executed instruction to complete
-	ubyte Execute();
+	void Execute();
 
 	//Initializes the CPU to begin Program execution as per specification
 	//Only initializes the ProgramCounter and sets InterruptDisable flag
@@ -38,6 +38,7 @@ private:
 	//THIS CPU IS LITTLE ENDIAN
 
 	BUS& Bus;
+	//ubyte WaitCycles;
 
 	ubyte Accumulator;//Accumulator register
 	ubyte Y_Register;//Index register

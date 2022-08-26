@@ -1,24 +1,23 @@
 #include "CPU_6052.h"
 #include <string>
 #include "BUS.h"
-#include <iostream>
-#include <iomanip>
+#include <format>
 
 
-/* IMPORTANT NOTE: INC, DEC, LSR, ASL, ROL, ROR simulate data reads even though they modify the data, which may or may not cause issues with PPU addressing */
-
-ubyte CPU_6052::Execute()
+void CPU_6052::Execute()
 {
-	static int cycleCount = 0;
+	//if (WaitCycles-- > 0)
+		//return;
+
+	//static int cycleCount = 0;
 	ubyte opcode = Read(ProgramCounter);
 	const Instruction& instruction = Instructions[opcode];
 	
-	if (ProgramCounter ==/* 0xdbb5u*/0xc66eu)
-		int x = 5;//Something to put a break point on
+	//if (ProgramCounter ==/* 0xdbb5u*/0xc66eu)
+	//	int x = 5;//Something to put a break point on
 	
-	std::cout << "Memory: " << "0x" << std::hex << std::setfill('0') << std::setw(4) << (unsigned int)ProgramCounter;
-	std::cout << "   Opcode: " << " 0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)opcode;
-	std::cout << "   Name: " << instruction.Name;
+	//OutputDebugStringW((std::wstring(L"Memory: 0x") + std::to_wstring((unsigned int)ProgramCounter)).c_str());
+	//std::cout << "   Opcode: " << " 0x" << std::hex << std::setfill('0') << std::setw(2) << (unsigned int)opcode;
 	
 	if (instruction.Operation == nullptr)
 		throw std::runtime_error("Invalid Opcode!");
@@ -26,11 +25,14 @@ ubyte CPU_6052::Execute()
 	Operand operand = (this->*instruction.GetOperand)();
 	(this->*instruction.Operation)(operand);
 	
-	std::cout << "   Data: " << "0x" << std::hex << std::setfill('0') << std::setw(4) << (unsigned int)operand.address;
+	//std::cout << "   Data: " << "0x" << std::hex << std::setfill('0') << std::setw(4) << (unsigned int)operand.address;
+	std::string debugString = std::format("Operation: {} DataAddr: {:#04x} \n", instruction.Name, operand.address);
+	OutputDebugStringA(debugString.c_str());
 
-	cycleCount += instruction.baseCycles + operand.deltaCycles;
-	std::cout << "   Cyc: " << std::dec << cycleCount << std::endl;
-	return instruction.baseCycles + operand.deltaCycles;
+	//cycleCount += instruction.baseCycles + operand.deltaCycles;
+	//std::cout << "   Cyc: " << std::dec << cycleCount << std::endl;
+
+	//WaitCycles = instruction.baseCycles + operand.deltaCycles;
 }
 
 void CPU_6052::Reset()
@@ -371,7 +373,7 @@ void CPU_6052::ADC(Operand& operand)
 	ubyte data = Read(operand.address);
 	//Conversion to byte then byte2 is done, so that when the values get widened, the 2's complement representation is preserved i.e. padding is f not 0;
 	//Casting right to byte2 will pad with 0, not preserving 2's complement, e.g. 0xf0 will become 0x00f0 not 0xfff0
-	byte2 temp = (byte2)(byte)Accumulator + (byte2)(byte)data + (byte2)(byte)IsSet(Carry);
+	sbyte2 temp = (sbyte2)(sbyte)Accumulator + (sbyte2)(sbyte)data + (sbyte2)(sbyte)IsSet(Carry);
 	Accumulator = ubyte(temp & 0x00ff);
 
 	SetFlagTo(Carry, isBitOn<8>((ubyte2)temp));//Value exceeds 255, i.e 8th bit is set
@@ -384,7 +386,7 @@ void CPU_6052::SBC(Operand& operand)
 {
 	ubyte data = Read(operand.address);
 
-	byte2 temp = (byte2)(byte)Accumulator - (byte2)(byte)data - (byte2)(byte)(!IsSet(Carry));
+	sbyte2 temp = (sbyte2)(sbyte)Accumulator - (sbyte2)(sbyte)data - (sbyte2)(sbyte)(!IsSet(Carry));
 	Accumulator = ubyte(temp & 0x00ff);
 
 	//Set if borrowing did not occur, else clear, borrowing did not occur if 8th bit of temp == 1

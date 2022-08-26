@@ -14,6 +14,9 @@ Cartridge::Cartridge(BUS& bus, std::string filename)
 
 	file.read(reinterpret_cast<char*>(&header), 16);
 
+	if (isBitOn<2>(header.flags6))
+		file.seekg(512, file.cur);//Skip past trainer if present
+
 	size_t SizeInBytesPRGROM = (size_t)header.size_PRGRom * 16384;
 	PRGROM.resize(SizeInBytesPRGROM);
 	file.read(reinterpret_cast<char*>(PRGROM.data()), SizeInBytesPRGROM);//0x8000 is mapped to 0x3fe0 in cartridge space

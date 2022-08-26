@@ -16,11 +16,11 @@
     <Filter Include="ROM">
       <UniqueIdentifier>{e4619d01-98e3-480a-868f-51987901c6b5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{e5fff5b1-12ee-4420-af5e-6f0cfec12d14}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="BUS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -34,6 +34,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Cartridge.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SathwareEngine\DesktopWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SathwareEngine\Entry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SathwareEngine\Graphics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -62,10 +71,39 @@
     <ClInclude Include="NES.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SathwareEngine\Color.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SathwareEngine\DesktopWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SathwareEngine\Graphics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SathwareEngine\SathwareException.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SathwareEngine\Timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="nestest.nes">
       <Filter>ROM</Filter>
     </None>
+    <None Include="SathwareEngine\VertexShader.cso">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="SathwareEngine\PixelShader.cso">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="SathwareEngine\VertexShader.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="SathwareEngine\PixelShader.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

@@ -1,23 +1,43 @@
 #pragma once
 #include "CommonTypes.h"
+#include "SathwareEngine/Graphics.h"
 #include <array>
 
 class PPU_2C02
 {
 public:
-	PPU_2C02(class BUS& bus)
-		: Bus(bus)
+	PPU_2C02(class BUS& bus, Graphics& gfx)
+		: Bus(bus), gfx(gfx)
 	{}
 	ubyte ReadRegister(ubyte index);
 	void WriteRegister(ubyte val, ubyte index);
 	ubyte PaletteRead(ubyte2 index);
 	void WriteOAM_DMA(ubyte highByte);
+	void Execute();
+	bool FrameReady()
+	{
+		return mScanLines == 0;
+	}
 	//Returns the number of cycles to complete to finish rendering
-	int Render();
+	//int Render();
 private:
 	BUS& Bus;
+	Graphics& gfx;
+
+	int mRunningCycles = 0;//Actual cycle timer
+	int mCycles = 0;//book keeping
+	int mScanLines = 0;//book keeping
+
 	ubyte Read(ubyte2 address);
 	void Write(ubyte val, ubyte2 address);
+
+	/* Helper Functions */
+	ubyte GetNameTableData();
+	ubyte GetPatternTableData(ubyte index);
+	int mOffsetX = 0;
+	int mOffsetY = 0;
+
+	//void DrawPattern(ubyte Pattern[]);
 	/* PPU Registers */
 	//Source: "https://www.nesdev.org/wiki/PPU_registers"
 	enum Registers : ubyte
