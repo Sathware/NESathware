@@ -9,11 +9,10 @@
 
 ubyte CPU_6052::Execute()
 {
-	//static int cycleCount = 0;
+	ubyte2 currAddress = ProgramCounter;
+
 	ubyte opcode = Read(ProgramCounter);
 	const Instruction& instruction = Instructions[opcode];
-	
-	std::string debugString = std::format("Memory: {:#06x}    Opcode: {:#04x}    Name: {}", ProgramCounter, opcode, instruction.Name);
 	
 	if (instruction.Operation == nullptr)
 		throw std::runtime_error("Invalid Opcode!");
@@ -22,8 +21,7 @@ ubyte CPU_6052::Execute()
 	(this->*instruction.Operation)(operand);
 	
 	//cycleCount += instruction.baseCycles + operand.deltaCycles;
-	debugString = std::format("{}    DataAddress: {:#06x}\n", debugString, operand.address);
-	std::cout << debugString;
+	std::cout << std::format("Memory: {:#06x}    Opcode: {:#04x}    Name: {}    DataAddress: {:#06x}\n", currAddress, opcode, instruction.Name, operand.address);
 
 	return instruction.baseCycles + operand.deltaCycles;
 }
@@ -366,7 +364,7 @@ void CPU_6052::ADC(Operand& operand)
 	ubyte data = Read(operand.address);
 	//Conversion to byte then byte2 is done, so that when the values get widened, the 2's complement representation is preserved i.e. padding is f not 0;
 	//Casting right to byte2 will pad with 0, not preserving 2's complement, e.g. 0xf0 will become 0x00f0 not 0xfff0
-	byte2 temp = (byte2)(byte)Accumulator + (byte2)(byte)data + (byte2)(byte)IsSet(Carry);
+	sbyte2 temp = (sbyte2)(sbyte)Accumulator + (sbyte2)(sbyte)data + (sbyte2)(sbyte)IsSet(Carry);
 	Accumulator = ubyte(temp & 0x00ff);
 
 	SetFlagTo(Carry, isBitOn<8>((ubyte2)temp));//Value exceeds 255, i.e 8th bit is set
@@ -379,7 +377,7 @@ void CPU_6052::SBC(Operand& operand)
 {
 	ubyte data = Read(operand.address);
 
-	byte2 temp = (byte2)(byte)Accumulator - (byte2)(byte)data - (byte2)(byte)(!IsSet(Carry));
+	sbyte2 temp = (sbyte2)(sbyte)Accumulator - (sbyte2)(sbyte)data - (sbyte2)(sbyte)(!IsSet(Carry));
 	Accumulator = ubyte(temp & 0x00ff);
 
 	//Set if borrowing did not occur, else clear, borrowing did not occur if 8th bit of temp == 1

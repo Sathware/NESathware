@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.32630.194
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NESathware", "NESathware\NESathware.vcxproj", "{665D5E89-147E-44EB-AA31-82AD94928F9A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SathwareEngine", "SathwareEngine\SathwareEngine.vcxproj", "{6E5E1419-9912-474F-91C8-A528B39556D6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,12 @@ Global
 		{665D5E89-147E-44EB-AA31-82AD94928F9A}.Release|x64.Build.0 = Release|x64
 		{665D5E89-147E-44EB-AA31-82AD94928F9A}.Release|x86.ActiveCfg = Release|Win32
 		{665D5E89-147E-44EB-AA31-82AD94928F9A}.Release|x86.Build.0 = Release|Win32
+		{6E5E1419-9912-474F-91C8-A528B39556D6}.Debug|x64.ActiveCfg = Debug|x64
+		{6E5E1419-9912-474F-91C8-A528B39556D6}.Debug|x64.Build.0 = Debug|x64
+		{6E5E1419-9912-474F-91C8-A528B39556D6}.Debug|x86.ActiveCfg = Debug|x64
+		{6E5E1419-9912-474F-91C8-A528B39556D6}.Release|x64.ActiveCfg = Release|x64
+		{6E5E1419-9912-474F-91C8-A528B39556D6}.Release|x64.Build.0 = Release|x64
+		{6E5E1419-9912-474F-91C8-A528B39556D6}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
