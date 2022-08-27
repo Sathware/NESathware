@@ -70,8 +70,9 @@ void PPU_2C02::WriteRegister(ubyte val, ubyte2 address)
 	{
 		ubyte2 PPUAddress = CombineBytes(mHighPPUADDR, mLowPPUADDR);
 		//Change internal palette or VRAM depending on address
-		if (PPUAddress >= 0x3f00)
-			mPalette[(PPUAddress - 0x3f00) % 0x0020u] = val;
+		if (PPUAddress % 0x4000u >= 0x3f00)
+			//Mirror address down into standard range 0 - 0xfff, then handle palette mirrors
+			mPalette[(PPUAddress % 0x4000u - 0x3f00) % 0x0020u] = val;
 		else
 			Write(val, PPUAddress);
 		//Increment address
@@ -87,8 +88,9 @@ ubyte PPU_2C02::ReadPPUADDR()
 {
 	ubyte2 PPUAddress = CombineBytes(mHighPPUADDR, mLowPPUADDR);
 	//return palette data immediately else return read buffer
-	if (PPUAddress >= 0x3f00)
-		mBusLatch = mPalette[(PPUAddress - 0x3f00) % 0x0020u];
+	if (PPUAddress % 0x4000u >= 0x3f00)
+		//Mirror address down into standard range 0 - 0xfff, then handle palette mirrors
+		mBusLatch = mPalette[(PPUAddress % 0x4000u - 0x3f00) % 0x0020u];
 	else
 	{
 		mBusLatch = mReadBuffer;
