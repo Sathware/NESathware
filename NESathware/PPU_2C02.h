@@ -11,4 +11,3 @@ private:
 	BUS& bus;
 	Graphics& gfx;
 };
-

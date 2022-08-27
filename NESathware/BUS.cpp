@@ -2,7 +2,7 @@
 
 ubyte BUS::ReadCPU(ubyte2 address)
 {
-	assert(address >= 0 && address <= 0xffff);//Sanity check
+	assert(address <= 0xffff);//Sanity check
 	if (address < 0x2000)
 	{
 		//2KB internal RAM and mirrors
@@ -32,7 +32,7 @@ ubyte BUS::ReadCPU(ubyte2 address)
 
 void BUS::WriteCPU(ubyte val, ubyte2 address)
 {
-	assert(address >= 0 && address <= 0xffff);//Sanity check
+	assert(address <= 0xffff);//Sanity check
 	if (address < 0x2000)
 	{
 		//2KB internal RAM and mirrors
@@ -57,5 +57,55 @@ void BUS::WriteCPU(ubyte val, ubyte2 address)
 	{
 		//Cartridge space
 		mpCartridge->WriteCPU(val, address);
+	}
+}
+
+ubyte BUS::ReadPPU(ubyte2 address)
+{
+	assert(address <= 0x3fffu);
+	if (address <= 0x1fffu)
+	{
+		//pattern tables
+	}
+	else if (address <= 0x2fffu)
+	{
+		//nametables
+	}
+	else if (address <= 0x3effu)
+	{
+		//mirrors of 0x2000 - 0x2eff
+	}
+	else if (address <= 0x3f1fu)
+	{
+		//palette ram indexes
+	}
+	else if (address <= 0x3fffu)
+	{
+		//mirrors of 0x3f00 - 0x3f1f
+	}
+}
+
+void BUS::WritePPU(ubyte val, ubyte2 address)
+{
+	assert(address <= 0x3fffu);
+	if (address <= 0x1fffu)
+	{
+		//pattern tables
+	}
+	else if (address <= 0x2fffu)
+	{
+		//nametables
+	}
+	else if (address <= 0x3effu)
+	{
+		//mirrors of 0x2000 - 0x2eff
+	}
+	else if (address <= 0x3f1fu)
+	{
+		//palette ram indexes
+	}
+	else if (address <= 0x3fffu)
+	{
+		//mirrors of 0x3f00 - 0x3f1f
 	}
 }
