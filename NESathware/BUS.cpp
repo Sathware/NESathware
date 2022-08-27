@@ -2,7 +2,6 @@
 
 ubyte BUS::ReadCPU(ubyte2 address)
 {
-	assert(address <= 0xffff);//Sanity check
 	if (address < 0x2000)
 	{
 		//2KB internal RAM and mirrors
@@ -12,7 +11,7 @@ ubyte BUS::ReadCPU(ubyte2 address)
 	else if (address < 0x4000)
 	{
 		//PPU registers and mirrors
-		ubyte2 index = address % 0x8u;
+		return mpPPU->ReadRegister(address);
 	}
 	else if (address < 0x4018)
 	{
@@ -32,7 +31,6 @@ ubyte BUS::ReadCPU(ubyte2 address)
 
 void BUS::WriteCPU(ubyte val, ubyte2 address)
 {
-	assert(address <= 0xffff);//Sanity check
 	if (address < 0x2000)
 	{
 		//2KB internal RAM and mirrors
@@ -42,7 +40,7 @@ void BUS::WriteCPU(ubyte val, ubyte2 address)
 	else if (address < 0x4000)
 	{
 		//PPU registers and mirrors
-		ubyte2 index = address % 0x8u;
+		mpPPU->WriteRegister(val, address);
 	}
 	else if (address < 0x4018)
 	{
@@ -62,7 +60,13 @@ void BUS::WriteCPU(ubyte val, ubyte2 address)
 
 ubyte BUS::ReadPPU(ubyte2 address)
 {
-	assert(address <= 0x3fffu);
+	if (address > 0x3fffu)
+		address %= address;
+
+	//Adresses 0x3f00u - 0x3effu are addresses of 0x2f00u - 0x2effu
+	if (address >= 0x3f00u && address <= 0x3effu)
+		address -= 0x1000u;
+
 	if (address <= 0x1fffu)
 	{
 		//pattern tables
@@ -71,23 +75,30 @@ ubyte BUS::ReadPPU(ubyte2 address)
 	{
 		//nametables
 	}
-	else if (address <= 0x3effu)
-	{
-		//mirrors of 0x2000 - 0x2eff
-	}
-	else if (address <= 0x3f1fu)
-	{
-		//palette ram indexes
-	}
-	else if (address <= 0x3fffu)
-	{
-		//mirrors of 0x3f00 - 0x3f1f
-	}
+	//The rest are not neccessary, the if guard prevents accessing the nametable mirrors, and palettes are internal to the ppu
+	//else if (address <= 0x3effu)
+	//{
+	//	//mirrors of 0x2000 - 0x2eff
+	//}
+	//else if (address <= 0x3f1fu)
+	//{
+	//	//palette ram indexes
+	//}
+	//else if (address <= 0x3fffu)
+	//{
+	//	//mirrors of 0x3f00 - 0x3f1f
+	//}
+	return 0;
 }
 
 void BUS::WritePPU(ubyte val, ubyte2 address)
 {
-	assert(address <= 0x3fffu);
+	if (address > 0x3fffu)
+		address %= address;
+
+	if (address >= 0x3f00u && address <= 0x3effu)
+		address -= 0x1000u;
+
 	if (address <= 0x1fffu)
 	{
 		//pattern tables
@@ -95,17 +106,5 @@ void BUS::WritePPU(ubyte val, ubyte2 address)
 	else if (address <= 0x2fffu)
 	{
 		//nametables
-	}
-	else if (address <= 0x3effu)
-	{
-		//mirrors of 0x2000 - 0x2eff
-	}
-	else if (address <= 0x3f1fu)
-	{
-		//palette ram indexes
-	}
-	else if (address <= 0x3fffu)
-	{
-		//mirrors of 0x3f00 - 0x3f1f
 	}
 }
