@@ -1,5 +1,4 @@
 #pragma once
-#include <Windows.h>
 #include <string>
 #include "SathwareException.h"
 #include "Graphics.h"

@@ -12,7 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DesktopWindow.cpp" />
-    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="DLLMain.cpp" />
     <ClCompile Include="Graphics.cpp" />
   </ItemGroup>
   <ItemGroup>

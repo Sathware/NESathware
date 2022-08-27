@@ -14,17 +14,17 @@ int main()
             throw std::runtime_error("Could not get DLL Handle");
 
         DesktopWindow desktopWindow(256u, 240u, dllInstance, SW_NORMAL);
-
         Graphics directXGFX(desktopWindow);
+        Timer timer;
 
-        NES nes("nestest.nes", 0xc000);
+        NES nes("nestest.nes", directXGFX, 0xc000);
 
         while (desktopWindow.IsRunning())
         {
             //Timer FrameTimer;
             directXGFX.Clear();
 
-            nes.Execute();
+            nes.Run(timer.GetElapsedSeconds());
 
             for (int x = 0; x < 100; ++x)
                 directXGFX.PutPixel(x, 100, Color(255, 255, 255, 255));

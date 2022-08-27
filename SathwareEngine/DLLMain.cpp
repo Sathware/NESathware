@@ -3,6 +3,7 @@
 #include "SathwareApp.h"
 #include <stdexcept>
 #include "SathwareEngine.h"
+#include "Timer.h"
 //#include "Graphics.h"
 //#include "Timer.h"
 

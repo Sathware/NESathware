@@ -10,7 +10,8 @@ public:
 	Timer()
 		: startTime(std::chrono::steady_clock::now())
 	{}
-	//Returns the time from last time check
+	//Returns the time elapsed from the last time this function was called
+	//The first time this function is called, it returns the time elapsed since the Timer object was created
 	float GetElapsedSeconds()
 	{
 		//Get time elapsed in seconds

@@ -9,8 +9,8 @@
 class NES
 {
 public:
-	NES(std::string romFileName, ubyte2 cpuStartOverride)
-		: mBus(), mpCartridge(LoadRom(romFileName)), mCPU(mBus, cpuStartOverride), mPPU(mBus), mAPU(mBus)
+	NES(std::string romFileName, class Graphics& gfx, ubyte2 cpuStartOverride)
+		: mBus(), mpCartridge(LoadRom(romFileName)), mCPU(mBus, cpuStartOverride), mPPU(mBus, gfx), mAPU(mBus)
 	{
 		mBus.mpCartridge = mpCartridge.get();
 		mBus.mpCPU = &mCPU;
@@ -18,9 +18,12 @@ public:
 		mBus.mpAPU = &mAPU;
 	}
 
-	void Execute()
+	void Run(float dt)
 	{
-		mCPU.Execute();
+		for (; dt > 0; dt -= 0.00000056f)
+		{
+			mCPU.Execute();
+		}
 	}
 
 	std::unique_ptr<Mapper> LoadRom(std::string filename)
