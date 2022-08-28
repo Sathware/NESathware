@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Color.cpp" />
     <ClCompile Include="DesktopWindow.cpp" />
     <ClCompile Include="DLLMain.cpp" />
     <ClCompile Include="Graphics.cpp" />

@@ -60,6 +60,7 @@ void BUS::WriteCPU(ubyte val, ubyte2 address)
 
 ubyte BUS::ReadPPU(ubyte2 address)
 {
+	//mirror addresses down
 	if (address > 0x3fffu)
 		address %= address;
 
@@ -88,13 +89,16 @@ ubyte BUS::ReadPPU(ubyte2 address)
 	//{
 	//	//mirrors of 0x3f00 - 0x3f1f
 	//}
+	return 0;
 }
 
 void BUS::WritePPU(ubyte val, ubyte2 address)
 {
+	//mirror addresses down
 	if (address > 0x3fffu)
 		address %= address;
 
+	//Adresses 0x3f00u - 0x3effu are addresses of 0x2f00u - 0x2effu
 	if (address >= 0x3f00u && address <= 0x3effu)
 		address -= 0x1000u;
 

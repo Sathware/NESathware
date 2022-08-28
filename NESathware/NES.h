@@ -26,6 +26,9 @@ public:
 		}
 	}
 
+private:
+	BUS mBus;
+
 	std::unique_ptr<Mapper> LoadRom(std::string filename)
 	{
 		Header header;
@@ -47,8 +50,6 @@ public:
 		}
 	}
 
-private:
-	BUS mBus;
 	std::unique_ptr<Mapper> mpCartridge;//NES Cartridge
 	CPU_6052 mCPU;//NES Central Processing Unit
 	PPU_2C02 mPPU;//NES Picture Processing Unit
