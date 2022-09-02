@@ -37,6 +37,7 @@ void PPU_2C02::Execute()
 		//Create NMI and set VBLANK bit
 		mPPUSTATUS |= 0x80;
 		bus.InvokeNMI();
+
 		gfx.Render();
 		gfx.ClearBuffer();
 	}
@@ -208,13 +209,11 @@ void inline PPU_2C02::DrawSliver()
 	//Draw sliver
 	for (unsigned int i = 0; i < 8; ++i)
 	{
-		ubyte subPaletteColorIndexIndex = (2 * IsBitOn(i, patternHigh)) | IsBitOn(i, patternLow);
+		ubyte subPaletteColorIndexIndex = (2 * (ubyte)IsBitOn(i, patternHigh)) | (ubyte)IsBitOn(i, patternLow);
 
-		ubyte systemPaletteIndex = subPaletteColorIndexIndex == 0 ? mPalette[0] : subPalette.ColorIndexes[subPaletteColorIndexIndex];
+		ubyte systemPaletteIndex = (subPaletteColorIndexIndex == 0) ? mPalette[0] : subPalette.ColorIndexes[subPaletteColorIndexIndex];
 
-		Color c = mSystemPalette[systemPaletteIndex];
-
-		gfx.PutPixel(x + i, y, c);
+		gfx.PutPixel(x + i, y, mSystemPalette[systemPaletteIndex]);
 	}
 }
 
