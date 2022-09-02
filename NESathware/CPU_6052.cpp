@@ -7,8 +7,14 @@
 
 /* IMPORTANT NOTE: INC, DEC, LSR, ASL, ROL, ROR simulate data reads even though they modify the data, which may or may not cause issues with PPU addressing */
 
-ubyte CPU_6052::Execute()
+void CPU_6052::Execute()
 {
+	if (mWaitCycles > 0)
+	{
+		--mWaitCycles;
+		return;
+	}
+
 	ubyte2 currAddress = ProgramCounter;
 
 	ubyte opcode = Read(ProgramCounter);
@@ -23,18 +29,20 @@ ubyte CPU_6052::Execute()
 	//cycleCount += instruction.baseCycles + operand.deltaCycles;
 	std::cout << std::format("Memory: {:#06x}    Opcode: {:#04x}    Name: {}    DataAddress: {:#06x}\n", currAddress, opcode, instruction.Name, operand.address);
 
-	return instruction.baseCycles + operand.deltaCycles;
+	mWaitCycles += instruction.baseCycles + operand.deltaCycles;
+	/*return instruction.baseCycles + operand.deltaCycles;*/
 }
 
 void CPU_6052::Reset()
 {
 	SetFlag(InterruptDisable);
-	ubyte2 programCounterLow = Read(0xfffc);
-	ubyte2 programCounterHigh = Read(0xfffd);
-	ProgramCounter = (programCounterHigh << 8) | programCounterLow;//combine
+	SetFlag(Break);
+	ubyte2 startLow = Read(0xfffc);
+	ubyte2 startHigh = Read(0xfffd);
+	ProgramCounter = CombineBytes(startHigh, startLow);
 }
 
-ubyte CPU_6052::NMI()
+void CPU_6052::NMI()
 {
 	//unmaskable interrupt handlers are stored in another address
 	//and are not affected by Interrupt disable flag
@@ -46,10 +54,10 @@ ubyte CPU_6052::NMI()
 	ubyte2 pInterruptHandlerHigh = Read(0xfffb);
 	ubyte2 pInterruptHandler = (pInterruptHandlerHigh << 8) | pInterruptHandlerLow;
 	ProgramCounter = pInterruptHandler;
-	return 7;//Number of cycles for an interrupt to be processed
+	mWaitCycles += 7;//Number of cycles for an interrupt to be processed
 }
 
-ubyte CPU_6052::IRQ()
+void CPU_6052::IRQ()
 {
 	if (!IsSet(InterruptDisable))
 	{
@@ -61,9 +69,8 @@ ubyte CPU_6052::IRQ()
 		ubyte2 pInterruptHandlerHigh = Read(0xffff);
 		ubyte2 pInterruptHandler = (pInterruptHandlerHigh << 8) | pInterruptHandlerLow;
 		ProgramCounter = pInterruptHandler;
-		return 7;//Number of cycles for an interrupt to be processed
+		mWaitCycles += 7;//Number of cycles for an interrupt to be processed
 	}
-	return 0;
 }
 
 ubyte CPU_6052::Read(ubyte2 address)
@@ -500,8 +507,8 @@ void CPU_6052::BIT(Operand& operand)
 {
 	ubyte data = Read(operand.address);
 	ubyte temp = Accumulator & data;
-	SetFlagTo(Negative, GetMSB(temp));
-	SetFlagTo(Overflow, isBitOn<6>(temp));//Check the 6th bit of temp
+	SetFlagTo(Negative, GetMSB(data));
+	SetFlagTo(Overflow, isBitOn<6>(data));//Overflow flag is set to 6th bit
 	SetFlagTo(Zero, temp == 0);
 }
 

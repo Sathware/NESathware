@@ -25,6 +25,16 @@ struct SathwareAPI Color
 		reinterpret_cast<__int8*>(&rgba)[3] = a;
 	}
 
+	Color(unsigned __int32 RGBA)
+		: Color(
+			RGBA >> 24u,
+			(RGBA >> 16u) & 0x000f,
+			(RGBA >> 8u) & 0x000f,
+			RGBA & 0x000f
+		)
+	{
+	}
+
 	void SetR(unsigned __int8 r)
 	{
 		reinterpret_cast<__int8*>(&rgba)[0] = r;

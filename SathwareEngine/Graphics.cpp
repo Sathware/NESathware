@@ -340,10 +340,11 @@ void Graphics::InitializePixelShaderTexture()
 	ThrowIfFailed(result, L"Failed to create Sampler for texture!");
 }
 
-void Graphics::Clear()
+void Graphics::ClearBuffer()
 {
-	for (size_t i = 0; i < m_width * m_height; ++i)
-		frameImage[i].rgba = 0x00000000;
+	memset(reinterpret_cast<char*>(frameImage), 0x00000000, m_width * m_height);
+	/*for (size_t i = 0; i < m_width * m_height; ++i)
+		frameImage[i].rgba = 0x00000000;*/
 }
 
 void Graphics::UpdateFrame()

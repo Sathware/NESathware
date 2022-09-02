@@ -54,12 +54,12 @@ struct Mapper0 : public Mapper
 
 	void WriteCPU(ubyte val, ubyte2 address) override 
 	{
-		//CPU memory addresses 0x8000 - 0xffff map to PRG ROM
-		assert(address >= 0x8000u && address <= 0xffff);
+		////CPU memory addresses 0x8000 - 0xffff map to PRG ROM
+		//assert(address >= 0x8000u && address <= 0xffff);
 
-		//If PRG ROM is 16KB then mirror
-		ubyte2 internalAddress = (address - 0x8000u) % ((ubyte2)header.size_PRGRom * 0x4000u);
-		PRG_ROM[internalAddress] = val;
+		////If PRG ROM is 16KB then mirror
+		//ubyte2 internalAddress = (address - 0x8000u) % ((ubyte2)header.size_PRGRom * 0x4000u);
+		//PRG_ROM[internalAddress] = val;
 	}
 
 	ubyte ReadPPU(ubyte2 address) const override
@@ -71,9 +71,9 @@ struct Mapper0 : public Mapper
 
 	void WritePPU(ubyte val, ubyte2 address) override
 	{
-		//Normally PPU memory addresses 0x0000 - 0x1fff map to CHR ROM
-		assert(address < 0x2000);
-		CHR_ROM[address] = val;
+		////Normally PPU memory addresses 0x0000 - 0x1fff map to CHR ROM
+		//assert(address < 0x2000);
+		//CHR_ROM[address] = val;
 	}
 
 	//32KB PRG ROM

@@ -18,10 +18,27 @@ public:
 		mBus.mpAPU = &mAPU;
 	}
 
+	NES(std::string romFileName, class Graphics& gfx)
+		: mBus(), mpCartridge(LoadRom(romFileName)), mCPU(mBus), mPPU(mBus, gfx), mAPU(mBus)
+	{
+		mBus.mpCartridge = mpCartridge.get();
+		mBus.mpCPU = &mCPU;
+		mBus.mpPPU = &mPPU;
+		mBus.mpAPU = &mAPU;
+		mCPU.Reset();
+	}
+
 	void Run(float dt)
 	{
+		if (dt > 1)
+			dt = 0.00000056f;
+
 		for (; dt > 0; dt -= 0.00000056f)
 		{
+			//3 PPU clock cycles = 1 CPU clock cycle
+			mPPU.Execute();
+			mPPU.Execute();
+			mPPU.Execute();
 			mCPU.Execute();
 		}
 	}

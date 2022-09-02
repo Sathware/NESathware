@@ -10,41 +10,45 @@ class CPU_6052
 {
 public:
 	CPU_6052(class BUS& bus, ubyte2 programStartOverride)
-		:Bus(bus),
-		Accumulator(0),
-		Y_Register(0),
-		X_Register(0),
-		ProgramCounter(0),
-		StackPointer(0xff),
-		Status(0)
+		:Bus(bus)
 	{
 		//Reset();//Initialize CPU, simulates startup sequence
 		SetFlag(InterruptDisable);
 		ProgramCounter = programStartOverride;
 	}
 
+	CPU_6052(class BUS& bus)
+		:Bus(bus)
+	{
+		//Reset();//Initialize CPU, simulates startup sequence
+		/*SetFlag(InterruptDisable);
+		ProgramCounter = programStartOverride;*/
+	}
+
 	//Execute current instruction and move to next instruction
-	//return number of cycles to wait for executed instruction to complete
-	ubyte Execute();
+	void Execute();
 
 	//Initializes the CPU to begin Program execution as per specification
 	//Only initializes the ProgramCounter and sets InterruptDisable flag
 	void Reset();
 
 	//Interrupt function for simulating Interrupts and non maskable interrupts as per specification
-	ubyte NMI();
-	ubyte IRQ();
+	void NMI();
+	void IRQ();
 private:
 	//THIS CPU IS LITTLE ENDIAN
 
 	BUS& Bus;
 
-	ubyte Accumulator;//Accumulator register
-	ubyte Y_Register;//Index register
-	ubyte X_Register;//Index register
-	ubyte2 ProgramCounter;//Program Counter, always points to next instruction to be executed
-	ubyte StackPointer;//Stack Pointer, always points to the next available memory slot
-	ubyte Status;//Flags
+	/* Emulation */
+	int mWaitCycles = 0;
+
+	ubyte Accumulator = 0;//Accumulator register
+	ubyte Y_Register = 0;//Index register
+	ubyte X_Register = 0;//Index register
+	ubyte2 ProgramCounter = 0;//Program Counter, always points to next instruction to be executed
+	ubyte StackPointer = 0xff;//Stack Pointer, always points to the next available memory slot
+	ubyte Status = 0;//Flags
 
 	enum Flag : ubyte
 	{

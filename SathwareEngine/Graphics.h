@@ -12,7 +12,7 @@ class SathwareAPI Graphics
 {
 public:
 	Graphics(const class DesktopWindow& window);
-	void Clear();
+	void ClearBuffer();
 	void Render();
 
 	void PutPixel(unsigned __int32 x, unsigned __int32 y, Color c)

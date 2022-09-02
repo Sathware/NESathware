@@ -17,19 +17,19 @@ int main()
         Graphics directXGFX(desktopWindow);
         Timer timer;
 
-        NES nes("nestest.nes", directXGFX, 0xc000);
+        NES nes("helloworld.nes", directXGFX);
 
         while (desktopWindow.IsRunning())
         {
             //Timer FrameTimer;
-            directXGFX.Clear();
+            //directXGFX.Clear();
 
             nes.Run(timer.GetElapsedSeconds());
 
-            for (int x = 0; x < 100; ++x)
-                directXGFX.PutPixel(x, 100, Color(255, 255, 255, 255));
+            //for (int x = 0; x < 100; ++x)
+            //    directXGFX.PutPixel(x, 100, Color(255, 255, 255, 255));
 
-            directXGFX.Render();
+            //directXGFX.Render();
             //OutputDebugStringW(std::to_wstring(FrameTimer.GetElapsedSeconds()).c_str());
         }
     }

@@ -16,6 +16,10 @@ public:
 	ubyte ReadPPU(ubyte2 address);
 	void WriteCPU(ubyte val, ubyte2 address);
 	void WritePPU(ubyte val, ubyte2 address);
+	void InvokeNMI()
+	{
+		mpCPU->NMI();
+	}
 public:
 	CPU_6052* mpCPU = nullptr;
 	PPU_2C02* mpPPU = nullptr;
@@ -24,5 +28,7 @@ public:
 
 	//2KB onboard ram and rest of address space
 	std::array<ubyte, 0x0800u> mRAM = { 0 };
+	//2KB onboard VRAM
+	std::array<ubyte, 0x0800u> mVRAM = { 0 };
 };
 

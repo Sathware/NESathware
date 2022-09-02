@@ -172,7 +172,7 @@
     <ClInclude Include="PPU_2C02.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="nestest.nes" />
+    <None Include="helloworld.nes" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SathwareEngine\SathwareEngine.vcxproj">
