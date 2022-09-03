@@ -27,7 +27,7 @@ void CPU_6052::Execute()
 	(this->*instruction.Operation)(operand);
 	
 	//cycleCount += instruction.baseCycles + operand.deltaCycles;
-	std::cout << std::format("Memory: {:#06x}    Opcode: {:#04x}    Name: {}    DataAddress: {:#06x}\n", currAddress, opcode, instruction.Name, operand.address);
+	//std::cout << std::format("Memory: {:#06x}    Opcode: {:#04x}    Name: {}    DataAddress: {:#06x}\n", currAddress, opcode, instruction.Name, operand.address);
 
 	mWaitCycles += instruction.baseCycles + operand.deltaCycles;
 	/*return instruction.baseCycles + operand.deltaCycles;*/

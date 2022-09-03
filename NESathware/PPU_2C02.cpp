@@ -155,7 +155,7 @@ void PPU_2C02::WriteRegister(ubyte val, ubyte2 address)
 	}
 }
 
-bool IsBitOn(unsigned int bit, ubyte val)
+static bool IsBitOn(unsigned int bit, ubyte val)
 {
 	return (val & (1u << bit)) != 0u;
 }

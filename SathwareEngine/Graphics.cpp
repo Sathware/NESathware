@@ -374,5 +374,5 @@ void Graphics::Render()
 
 	mContext->Draw(numVertices, 0);
 	HRESULT result = mSwapChain->Present(1, 0);
-	ThrowIfFailed(result, L"Presenting Fram failed!");
+	ThrowIfFailed(result, L"Presenting Frame failed!");
 }

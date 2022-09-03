@@ -9,15 +9,6 @@
 class NES
 {
 public:
-	NES(std::string romFileName, class Graphics& gfx, ubyte2 cpuStartOverride)
-		: mBus(), mpCartridge(LoadRom(romFileName)), mCPU(mBus, cpuStartOverride), mPPU(mBus, gfx), mAPU(mBus)
-	{
-		mBus.mpCartridge = mpCartridge.get();
-		mBus.mpCPU = &mCPU;
-		mBus.mpPPU = &mPPU;
-		mBus.mpAPU = &mAPU;
-	}
-
 	NES(std::string romFileName, class Graphics& gfx)
 		: mBus(), mpCartridge(LoadRom(romFileName)), mCPU(mBus), mPPU(mBus, gfx), mAPU(mBus)
 	{
@@ -43,6 +34,8 @@ public:
 		}
 	}
 
+	std::unique_ptr<Mapper> mpCartridge;//NES Cartridge
+
 private:
 	BUS mBus;
 
@@ -58,6 +51,7 @@ private:
 		//------------TODO: Do stuff with trainer if present
 
 		ubyte mapperNum = (header.flags7 & 0xf0) | (header.flags6 >> 4);
+		assert(mapperNum == 0);
 
 		switch (mapperNum)
 		{
@@ -67,7 +61,6 @@ private:
 		}
 	}
 
-	std::unique_ptr<Mapper> mpCartridge;//NES Cartridge
 	CPU_6052 mCPU;//NES Central Processing Unit
 	PPU_2C02 mPPU;//NES Picture Processing Unit
 	APU_2A03 mAPU;//NES Audio Processing Unit

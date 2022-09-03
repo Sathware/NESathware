@@ -4,6 +4,34 @@
 #include "../SathwareEngine/Graphics.h"
 #include "../SathwareEngine/Timer.h"
 
+static bool IsBitOn(unsigned int bit, ubyte val)
+{
+    return (val & (1u << bit)) != 0u;
+}
+
+//void DisplayCHRROM(Mapper* cartridge, Graphics& gfx)
+//{
+//    for (unsigned int patternTableIndex = 0; patternTableIndex <= 255; ++patternTableIndex)
+//    {
+//        //Display tile
+//        for (unsigned int tileRow = 0; tileRow < 8; ++tileRow)
+//        {
+//            unsigned int patternLow = cartridge->ReadPPU(0x1000 + patternTableIndex * 16 + tileRow);
+//            unsigned int patternHigh = cartridge->ReadPPU(0x1000 + patternTableIndex * 16 + 8 + tileRow);
+//            unsigned int pattern = patternLow | patternHigh;
+//            for (unsigned int bit = 0; bit < 8; ++bit)
+//            {
+//                unsigned int x = (patternTableIndex % 32) * 8 + (7 - bit);
+//                unsigned int y = (patternTableIndex / 32) * 8 + tileRow;
+//                if (IsBitOn(bit, pattern))
+//                {
+//                    gfx.PutPixel(x, y, Color::White);
+//                }
+//            }
+//        }
+//    }
+//}
+
 int main()
 {
     try
@@ -17,10 +45,16 @@ int main()
         Graphics directXGFX(desktopWindow);
         Timer timer;
 
-        NES nes("helloworld.nes", directXGFX);
+        NES nes("backgrounds.nes", directXGFX);
+
+        /*DisplayCHRROM(nes.mpCartridge.get(), directXGFX);
+        directXGFX.Render();*/
 
         while (desktopWindow.IsRunning())
         {
+            //Display CHR ROM
+            
+
             //Timer FrameTimer;
             //directXGFX.Clear();
 

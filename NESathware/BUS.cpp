@@ -73,7 +73,7 @@ ubyte BUS::ReadPPU(ubyte2 address)
 	if (address <= 0x1fffu)
 	{
 		//pattern tables
-		mpCartridge->ReadPPU(address);
+		return mpCartridge->ReadPPU(address);
 	}
 	else if (address <= 0x2fffu)
 	{

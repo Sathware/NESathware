@@ -1,6 +1,6 @@
 #pragma once
 #include "CommonTypes.h"
-#include <variant>
+#include <fstream>
 
 //Implementation of the 6502 8-Bit CPU
 //Source: Technical overview "https://en.wikipedia.org/wiki/MOS_Technology_6502"
@@ -9,16 +9,11 @@
 class CPU_6052
 {
 public:
-	CPU_6052(class BUS& bus, ubyte2 programStartOverride)
-		:Bus(bus)
-	{
-		//Reset();//Initialize CPU, simulates startup sequence
-		SetFlag(InterruptDisable);
-		ProgramCounter = programStartOverride;
-	}
+
+	std::ofstream mDebugLog;
 
 	CPU_6052(class BUS& bus)
-		:Bus(bus)
+		:Bus(bus), mDebugLog("CPU_LOG.txt", std::ofstream::trunc | std::ofstream::out)
 	{
 		//Reset();//Initialize CPU, simulates startup sequence
 		/*SetFlag(InterruptDisable);
