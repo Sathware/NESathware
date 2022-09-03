@@ -20,8 +20,8 @@ private:
 	/*Rendering*/
 	unsigned int mCurrentScanLine = 0;
 	unsigned int mCurrentCycle = 0;
-	//Draws 8 pixel sliver, Background Info: "https://famicom.party/book/10-spritegraphics/", "https://austinmorlan.com/posts/nes_rendering_overview/", "https://www.nesdev.org/wiki/Blargg_PPU", "https://www.nesdev.org/wiki/PPU_registers", "https://www.nesdev.org/wiki/PPU_nametables", "https://www.nesdev.org/wiki/PPU_pattern_tables"
-	void inline DrawSliver();
+	//Render Background also called Background Evaluation, Necessary Info: "https://famicom.party/book/10-spritegraphics/", "https://austinmorlan.com/posts/nes_rendering_overview/", "https://www.nesdev.org/wiki/Blargg_PPU", "https://www.nesdev.org/wiki/PPU_registers", "https://www.nesdev.org/wiki/PPU_nametables", "https://www.nesdev.org/wiki/PPU_pattern_tables"
+	void RenderBackground();
 
 	/* Helper Functions */
 	bool isVBLANK()

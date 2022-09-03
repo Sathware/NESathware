@@ -49,7 +49,7 @@ void BUS::WriteCPU(ubyte val, ubyte2 address)
 		//APU and I/O registers
 		if (address == 0x4014u)
 		{
-			mpPPU->WriteOAMDMA(&mRAM[(val << 8)]);
+			mpPPU->WriteOAMDMA(&mRAM[((ubyte2)val << 8)]);
 		}
 	}
 	else if (address < 0x4020)
@@ -98,7 +98,6 @@ ubyte BUS::ReadPPU(ubyte2 address)
 	//{
 	//	//mirrors of 0x3f00 - 0x3f1f
 	//}
-	return 0;
 }
 
 void BUS::WritePPU(ubyte val, ubyte2 address)
