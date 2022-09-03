@@ -47,6 +47,10 @@ void BUS::WriteCPU(ubyte val, ubyte2 address)
 	else if (address < 0x4018)
 	{
 		//APU and I/O registers
+		if (address == 0x4014u)
+		{
+			mpPPU->WriteOAMDMA(&mRAM[(val << 8)]);
+		}
 	}
 	else if (address < 0x4020)
 	{
