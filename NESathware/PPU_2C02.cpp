@@ -15,8 +15,9 @@ void PPU_2C02::Execute()
 
 	if (mCurrentScanLine == 240u && mCurrentCycle == 0)
 	{
-		//Render background (also
+		//Render background (also called background evaluation)
 		RenderBackground();
+		RenderSprites();
 		gfx.Render();
 		gfx.ClearBuffer();
 
@@ -171,9 +172,17 @@ void PPU_2C02::RenderBackground()
 		ubyte2 patternTableIndex = Read(baseNametableAddress + nametableIndex * sizeof(byte));
 		//Get corresponding attribute table index for nametable index
 		ubyte2 attributeTableIndex = (tileX / 4) + (tileY / 4) * 8;
+
 		//Each entry stores palette data about a 4x4 tile area, each quadrant is 2x2 tiles
 		//bits 0-1 => topleft quadrant, bits 2-3 topright quadrant, bits 4-5 => bottomleft quadrant, bits 6-7 => bottomright quadrant
 		ubyte palette4x4Tiles = Read(attributeTableAddress + attributeTableIndex);
+		//0b00 = topleft, 0b01 = topright, 0b10 = bottomleft, 0b11 = bottomright
+		ubyte quadrant = ((tileY % 2u) << 1u) | (tileX % 2);
+		//Extract sub palette index from attribute table byte
+		ubyte subPaletteIndex = (palette4x4Tiles >> (2 * quadrant)) & (0x03);
+		//mPalette or Palette Ram can be divided into 4 byte blocks or sub palettes
+		SubPalette& subPalette = reinterpret_cast<SubPalette*>(mPalette)[subPaletteIndex];
+
 		//Draw Tile 8x8 pixels
 		for (ubyte tileRow = 0; tileRow < 8; ++tileRow)
 		{
@@ -182,22 +191,65 @@ void PPU_2C02::RenderBackground()
 			//The address of the high pattern byte is (address of the low pattern byte) + 8
 			ubyte patternLow = Read(basePatternTableAddress + patternTableIndex * 16 + tileRow);
 			ubyte patternHigh = Read(basePatternTableAddress + patternTableIndex * 16 + tileRow + 8);
-
-			//0b00 = topleft, 0b01 = topright, 0b10 = bottomleft, 0b11 = bottomright
-			ubyte quadrant = ((tileY % 2u) << 1u) | (tileX % 2);
-			//Get sub palette index from attribute table byte
-			ubyte subPaletteIndex = (palette4x4Tiles >> (quadrant * 2)) & (0x03);
-
-			SubPalette& subPalette = reinterpret_cast<SubPalette*>(mPalette)[subPaletteIndex];
-
 			//Draw 8 pixel Sliver
 			for (ubyte tileCol = 0; tileCol < 8; ++tileCol)
 			{
-				ubyte subPaletteColorIndexIndex = ((ubyte)IsBitOn(tileCol, patternHigh) << 1u) | (ubyte)IsBitOn(tileCol, patternLow);
+				//Get index into sub palette from pattern table bytes
+				ubyte subPaletteColorsIndex = ((ubyte)IsBitOn(7 - tileCol, patternHigh) << 1u) | (ubyte)IsBitOn(7 - tileCol, patternLow);
 				//background color indexes in all subpalette are mirrors of background index in subpalette 0
-				ubyte systemPaletteIndex = (subPaletteColorIndexIndex == 0) ? mPalette[0] : subPalette.ColorIndexes[subPaletteColorIndexIndex];
+				ubyte systemPaletteIndex = (subPaletteColorsIndex == 0) ? mPalette[0] : subPalette.ColorIndexes[subPaletteColorsIndex];
 
 				gfx.PutPixel(tileX*8 + tileCol, tileY*8 + tileRow, mSystemPalette[systemPaletteIndex]);
+			}
+		}
+	}
+}
+
+void PPU_2C02::RenderSprites()
+{
+	struct Sprite
+	{
+		ubyte PosYTop;
+		ubyte TileIndex;
+		ubyte Properties;
+		ubyte PosXLeft;
+	};
+	static_assert(sizeof(Sprite) == 4);
+
+	//A subpalette is 4 bytes long, and houses indexes into the system palette
+	struct SubPalette
+	{
+		//ColorIndexes[0] = background color index for mSystemPalette
+		//ColorIndexes[1 to 3] = color indexes for mSystemPalette
+		ubyte ColorIndexes[4];
+	};
+	static_assert(sizeof(SubPalette) == 4);
+
+	Sprite* sprites = reinterpret_cast<Sprite*>(&mOAM[mOAMADDR]);
+
+	ubyte patternTableAddress = isBitOn<3>(mPPUCTRL) * 0x1000;
+
+	for (unsigned int i = 0; i < (64u - mOAMADDR / 4u); ++i)
+	{
+		Sprite& currSprite = sprites[i];
+		if (currSprite.PosYTop == 255)
+			continue;
+
+		ubyte subPaletteIndex = (currSprite.Properties & 0x03u);
+		
+		//Last four sub palettes in mPalette are sprite palettes
+		SubPalette& subPalette = reinterpret_cast<SubPalette*>(mPalette)[4 + subPaletteIndex];
+
+		for (ubyte tileRow = 0; tileRow < 8u; ++tileRow)
+		{
+			ubyte patternLow = Read(patternTableAddress + currSprite.TileIndex * 16 + tileRow);
+			ubyte patternHigh = Read(patternTableAddress + currSprite.TileIndex * 16 + tileRow + 8);
+			for (ubyte tileCol = 0; tileCol < 8u; ++tileCol)
+			{
+				ubyte colorsIndex = ((ubyte)IsBitOn(7 - tileCol, patternHigh) << 1u) | (ubyte)IsBitOn(7 - tileCol, patternLow);
+				ubyte paletteIndex = (colorsIndex == 0) ? mPalette[0] : subPalette.ColorIndexes[colorsIndex];
+
+				gfx.PutPixel(currSprite.PosXLeft + tileCol, currSprite.PosYTop + tileRow, mSystemPalette[paletteIndex]);
 			}
 		}
 	}

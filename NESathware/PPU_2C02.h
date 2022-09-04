@@ -4,6 +4,7 @@
 
 class PPU_2C02
 {
+	//Rendered fram is flipped horizontally (left is on right, and right is on left)
 public:
 	PPU_2C02(class BUS& bus, Graphics& gfx);
 	void Execute();
@@ -20,9 +21,10 @@ private:
 	/*Rendering*/
 	unsigned int mCurrentScanLine = 0;
 	unsigned int mCurrentCycle = 0;
-	//Render Background also called Background Evaluation, Necessary Info: "https://famicom.party/book/10-spritegraphics/", "https://austinmorlan.com/posts/nes_rendering_overview/", "https://www.nesdev.org/wiki/Blargg_PPU", "https://www.nesdev.org/wiki/PPU_registers", "https://www.nesdev.org/wiki/PPU_nametables", "https://www.nesdev.org/wiki/PPU_pattern_tables"
+	//Render Background also called Background Evaluation, Necessary Info: "https://famicom.party/book/13-backgroundgraphics/", "https://famicom.party/book/10-spritegraphics/", "https://austinmorlan.com/posts/nes_rendering_overview/", "https://www.nesdev.org/wiki/Blargg_PPU", "https://www.nesdev.org/wiki/PPU_registers", "https://www.nesdev.org/wiki/PPU_nametables", "https://www.nesdev.org/wiki/PPU_pattern_tables"
 	void RenderBackground();
-
+	//Render Sprites also called Sprite Evaluation, Necessary Info: "https://famicom.party/book/10-spritegraphics/"
+	void RenderSprites();
 	/* Helper Functions */
 	bool isVBLANK()
 	{
@@ -50,24 +52,9 @@ private:
 	//Used to simulate read buffer used internally in NES
 	ubyte mReadBuffer = 0;
 
-	/*struct Sprite
-	{
-		ubyte PosYTop;
-		ubyte TileIndex;
-		ubyte Attributes;
-		ubyte PosXLeft;
-	};
-    struct SubPalette
-    {
-        ubyte BackgroundIndex;
-        ubyte Color1Index;
-        ubyte Color2;
-        ubyte Color3;
-    };*/
-
 	//Object Attribute Memory
 	ubyte mOAM[256u] = { 0 };
-	//Pallette
+	//Pallette RAM
 	ubyte mPalette[32u] = { 0 };
 
 	const Color mSystemPalette[64u] =
