@@ -79,13 +79,13 @@ DesktopWindow::DesktopWindow(unsigned int clientWidth, unsigned int clientHeight
 
 	RECT clientArea{0, 0, mClientWidth, mClientHeight};
 	//Calculate the window width and height, given the client area width and height
-	AdjustWindowRect(&clientArea, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, false);
+	AdjustWindowRect(&clientArea, WS_OVERLAPPEDWINDOW & ~WS_OVERLAPPED, false);
 		
 	m_windowHandle = CreateWindowExW(
 		0,
 		m_className,
 		windowTitle.c_str(),
-		WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
+		WS_OVERLAPPEDWINDOW & ~WS_OVERLAPPED,
 		30,
 		30,
 		clientArea.right - clientArea.left,
@@ -101,5 +101,5 @@ DesktopWindow::DesktopWindow(unsigned int clientWidth, unsigned int clientHeight
 	}
 
 	ShowWindow(m_windowHandle, SW_SHOWDEFAULT);
-	UpdateWindow(m_windowHandle);
+	//UpdateWindow(m_windowHandle);
 }

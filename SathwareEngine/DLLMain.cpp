@@ -1,6 +1,5 @@
 #include "DesktopWindow.h"
 #include "SathwareException.h"
-#include "SathwareApp.h"
 #include <stdexcept>
 #include "SathwareEngine.h"
 #include "Timer.h"

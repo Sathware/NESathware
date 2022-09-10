@@ -47,9 +47,6 @@
     <ClInclude Include="Color.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SathwareApp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SathwareEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -20,7 +20,6 @@
     <ClInclude Include="Color.h" />
     <ClInclude Include="DesktopWindow.h" />
     <ClInclude Include="Graphics.h" />
-    <ClInclude Include="SathwareApp.h" />
     <ClInclude Include="SathwareEngine.h" />
     <ClInclude Include="SathwareException.h" />
     <ClInclude Include="Timer.h" />
