@@ -4,34 +4,6 @@
 #include "../SathwareEngine/Graphics.h"
 #include "../SathwareEngine/Timer.h"
 
-static bool IsBitOn(unsigned int bit, ubyte val)
-{
-    return (val & (1u << bit)) != 0u;
-}
-
-//void DisplayCHRROM(Mapper* cartridge, Graphics& gfx)
-//{
-//    for (unsigned int patternTableIndex = 0; patternTableIndex <= 255; ++patternTableIndex)
-//    {
-//        //Display tile
-//        for (unsigned int tileRow = 0; tileRow < 8; ++tileRow)
-//        {
-//            unsigned int patternLow = cartridge->ReadPPU(0x1000 + patternTableIndex * 16 + tileRow);
-//            unsigned int patternHigh = cartridge->ReadPPU(0x1000 + patternTableIndex * 16 + 8 + tileRow);
-//            unsigned int pattern = patternLow | patternHigh;
-//            for (unsigned int bit = 0; bit < 8; ++bit)
-//            {
-//                unsigned int x = (patternTableIndex % 32) * 8 + (7 - bit);
-//                unsigned int y = (patternTableIndex / 32) * 8 + tileRow;
-//                if (IsBitOn(bit, pattern))
-//                {
-//                    gfx.PutPixel(x, y, Color::White);
-//                }
-//            }
-//        }
-//    }
-//}
-
 int main()
 {
     try
@@ -43,28 +15,16 @@ int main()
 
         DesktopWindow desktopWindow(256u, 240u, dllInstance, SW_NORMAL);
         Graphics directXGFX(desktopWindow);
+
+        NES nes("DonkeyKong.nes", directXGFX);
         Timer timer;
 
-        NES nes("backgrounds.nes", directXGFX);
-
-        /*DisplayCHRROM(nes.mpCartridge.get(), directXGFX);
-        directXGFX.Render();*/
+        nes.mPPU.DisplayCHRROM();
+        directXGFX.Render();
 
         while (desktopWindow.IsRunning())
         {
-            //Display CHR ROM
-            
-
-            //Timer FrameTimer;
-            //directXGFX.Clear();
-
-            nes.Run(timer.GetElapsedSeconds());
-
-            //for (int x = 0; x < 100; ++x)
-            //    directXGFX.PutPixel(x, 100, Color(255, 255, 255, 255));
-
-            //directXGFX.Render();
-            //OutputDebugStringW(std::to_wstring(FrameTimer.GetElapsedSeconds()).c_str());
+            //nes.Run(timer.GetElapsedSeconds());
         }
     }
     catch (Exception& e)

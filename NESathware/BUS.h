@@ -5,6 +5,7 @@
 #include "APU_2A03.h"
 #include "Mapper.h"
 #include <array>
+#include <functional>
 
 //Handles inter-component communication
 class BUS
@@ -25,7 +26,7 @@ public:
 	PPU_2C02* mpPPU = nullptr;
 	APU_2A03* mpAPU = nullptr;
 	Mapper* mpCartridge = nullptr;
-
+	std::function<ubyte2(ubyte2)> Mirror;
 	//2KB onboard ram and rest of address space
 	std::array<ubyte, 0x0800u> mRAM = { 0 };
 	//2KB onboard VRAM

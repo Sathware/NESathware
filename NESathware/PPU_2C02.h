@@ -11,26 +11,40 @@ public:
 	ubyte ReadRegister(ubyte2 address);
 	//Source: "https://www.nesdev.org/wiki/PPU_registers"
 	void WriteRegister(ubyte val, ubyte2 address);
+
+	/*Debug*/
+	void DisplayCHRROM();
 private:
 	BUS& bus;
 	Graphics& gfx;
 
+	//A subpalette is 4 bytes long, and houses indexes into the system palette
+	struct SubPalette
+	{
+		//ColorIndexes[0] = background color index for mSystemPalette
+		//ColorIndexes[1 to 3] = color indexes for mSystemPalette
+		ubyte ColorIndexes[4];
+	};
+
 	/*Rendering*/
 	unsigned int mCurrentScanLine = 0;
 	unsigned int mCurrentCycle = 0;
-	//Draws 8 pixel sliver, Background Info: "https://austinmorlan.com/posts/nes_rendering_overview/", "https://www.nesdev.org/wiki/Blargg_PPU", "https://www.nesdev.org/wiki/PPU_registers", "https://www.nesdev.org/wiki/PPU_nametables", "https://www.nesdev.org/wiki/PPU_pattern_tables"
-	void inline DrawSliver();
+	//Render background, Background Info: "https://austinmorlan.com/posts/nes_rendering_overview/", "https://www.nesdev.org/wiki/Blargg_PPU", "https://www.nesdev.org/wiki/PPU_registers", "https://www.nesdev.org/wiki/PPU_nametables", "https://www.nesdev.org/wiki/PPU_pattern_tables"
+	void RenderBackground();
+	void RenderSliver(unsigned int pixel_xStart, unsigned int pixel_y, ubyte patternLow, ubyte patternHigh, SubPalette& subPalette);
 
 	/* Helper Functions */
 	bool isVBLANK()
 	{
-		return isBitOn<7>(mPPUSTATUS);
+		return IsBitOn<7>(mPPUSTATUS);
+	}
+	bool createNMIOnVBLANK()
+	{
+		return IsBitOn<7>(mPPUCTRL);
 	}
 	ubyte Read(ubyte2 address);
 	void Write(ubyte val, ubyte2 address);
 
-	/* Emulation */
-	int mWaitCycles = 0;
 	//PPU Registers
 	ubyte mPPUCTRL = 0,
 		  mPPUMASK = 0,
@@ -66,10 +80,11 @@ private:
 	//Object Attribute Memory
 	ubyte mOAM[256u] = { 0 };
 	//Pallette
-	ubyte mPalette[32u] = { 0 };
-
+	ubyte mPaletteRAM[32u] = { 0 };
+	ubyte greyPalette[4u] = { 15u, 32u, 16u, 0u };//black, white, grey, dark grey
 	const Color mSystemPalette[64u] =
 	{
+		//{r,g,b,a}
 		{0x7C,0x7C,0x7C,0xFF},
 		{0x00,0x00,0xFC,0xFF},
 		{0x00,0x00,0xBC,0xFF},

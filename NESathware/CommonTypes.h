@@ -9,9 +9,14 @@ typedef unsigned __int8 ubyte;
 typedef unsigned __int16 ubyte2;
 
 template<ubyte bit>
-static bool isBitOn(const ubyte2 data)
+static bool IsBitOn(const ubyte2 data)
 {
 	return (data & (1 << bit)) != 0;
+}
+
+static bool IsBitOn(unsigned int bit, ubyte val)
+{
+	return (val & (1u << bit)) != 0u;
 }
 
 //get most significant bit, or sign bit in two's complement representation

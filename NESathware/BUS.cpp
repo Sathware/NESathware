@@ -78,8 +78,7 @@ ubyte BUS::ReadPPU(ubyte2 address)
 	else if (address <= 0x2fffu)
 	{
 		//nametables
-		ubyte2 index = address % 0x0800u;//hardcoded vertical mirroring
-		return mVRAM.at(index);
+		return mVRAM.at(Mirror(address));
 	}
 	//The rest are not neccessary, the if guard prevents accessing the nametable mirrors, and palettes are internal to the ppu
 	//else if (address <= 0x3effu)
@@ -115,7 +114,6 @@ void BUS::WritePPU(ubyte val, ubyte2 address)
 	else if (address <= 0x2fffu)
 	{
 		//nametables
-		ubyte2 index = address % 0x0800u;//hardcoded vertical mirroring
-		mVRAM.at(index) = val;
+		mVRAM.at(Mirror(address)) = val;
 	}
 }

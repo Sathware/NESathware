@@ -178,7 +178,7 @@ CPU_6052::Operand CPU_6052::REL()
 	ubyte2 offset = Read(ProgramCounter);//offset is a signed 2's complement byte (-128 to 127)
 	++ProgramCounter;//Point to next instruction
 
-	if (isBitOn<7>(offset))//if offset is negative the most significant digit will be 1
+	if (IsBitOn<7>(offset))//if offset is negative the most significant digit will be 1
 		offset |= 0xff00;//preserve 2's complement representation
 
 	ubyte deltaCycles = 0;
@@ -374,7 +374,7 @@ void CPU_6052::ADC(Operand& operand)
 	sbyte2 temp = (sbyte2)(sbyte)Accumulator + (sbyte2)(sbyte)data + (sbyte2)(sbyte)IsSet(Carry);
 	Accumulator = ubyte(temp & 0x00ff);
 
-	SetFlagTo(Carry, isBitOn<8>((ubyte2)temp));//Value exceeds 255, i.e 8th bit is set
+	SetFlagTo(Carry, IsBitOn<8>((ubyte2)temp));//Value exceeds 255, i.e 8th bit is set
 	SetFlagTo(Overflow, temp > 127 || temp < -128);//result cannot be respresented in one byte
 	SetFlagTo(Zero, Accumulator == 0);
 	SetFlagTo(Negative, GetMSB(Accumulator) != 0);
@@ -389,7 +389,7 @@ void CPU_6052::SBC(Operand& operand)
 
 	//Set if borrowing did not occur, else clear, borrowing did not occur if 8th bit of temp == 1
 	//borrow is complement of carry
-	SetFlagTo(Carry, !isBitOn<8>(temp));
+	SetFlagTo(Carry, !IsBitOn<8>(temp));
 	SetFlagTo(Overflow, temp > 127 || temp < -128);
 	SetFlagTo(Zero, Accumulator == 0);
 	SetFlagTo(Negative, GetMSB(Accumulator));
@@ -508,7 +508,7 @@ void CPU_6052::BIT(Operand& operand)
 	ubyte data = Read(operand.address);
 	ubyte temp = Accumulator & data;
 	SetFlagTo(Negative, GetMSB(data));
-	SetFlagTo(Overflow, isBitOn<6>(data));//Overflow flag is set to 6th bit
+	SetFlagTo(Overflow, IsBitOn<6>(data));//Overflow flag is set to 6th bit
 	SetFlagTo(Zero, temp == 0);
 }
 

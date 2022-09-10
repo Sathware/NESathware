@@ -34,10 +34,12 @@ public:
 		}
 	}
 
-	std::unique_ptr<Mapper> mpCartridge;//NES Cartridge
-
-private:
 	BUS mBus;
+	std::unique_ptr<Mapper> mpCartridge;//NES Cartridge
+	CPU_6052 mCPU;//NES Central Processing Unit
+	PPU_2C02 mPPU;//NES Picture Processing Unit
+	APU_2A03 mAPU;//NES Audio Processing Unit
+private:
 
 	std::unique_ptr<Mapper> LoadRom(std::string filename)
 	{
@@ -50,8 +52,18 @@ private:
 
 		//------------TODO: Do stuff with trainer if present
 
-		ubyte mapperNum = (header.flags7 & 0xf0) | (header.flags6 >> 4);
+		ubyte mapperNum = (header.flags7 & 0xf0u) | (header.flags6 >> 4u);
 		assert(mapperNum == 0);
+
+		if (IsBitOn<0>(header.flags6))
+		{
+			mBus.Mirror = [](ubyte2 address) {return address % 0x800u; };
+		}
+		else
+		{
+			//mBus.Mirror = [](ubyte2 address) {return address % 0x800u; };
+			mBus.Mirror = [](ubyte2 address) { return 0x400 * (address >= 0x2800u) + address % 0x400u; };
+		}
 
 		switch (mapperNum)
 		{
@@ -60,8 +72,4 @@ private:
 		default: return nullptr;
 		}
 	}
-
-	CPU_6052 mCPU;//NES Central Processing Unit
-	PPU_2C02 mPPU;//NES Picture Processing Unit
-	APU_2A03 mAPU;//NES Audio Processing Unit
 };
