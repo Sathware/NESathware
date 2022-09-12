@@ -93,7 +93,6 @@ ubyte BUS::ReadPPU(ubyte2 address)
 	//{
 	//	//mirrors of 0x3f00 - 0x3f1f
 	//}
-	return 0;
 }
 
 void BUS::WritePPU(ubyte val, ubyte2 address)

@@ -15,6 +15,7 @@ void PPU_2C02::Execute()
 			bus.InvokeNMI();
 
 		RenderBackground();
+		//RenderSprites();
 		gfx.Render();
 		gfx.ClearBuffer();
 	}
@@ -155,7 +156,7 @@ void PPU_2C02::RenderBackground()
 			//bits 0-1 => topleft quadrant, bits 2-3 topright quadrant, bits 4-5 => bottomleft quadrant, bits 6-7 => bottomright quadrant
 			ubyte palette4x4Tiles = Read(attributeTableStart + attributeTableIndex);
 			//0b00 = topleft, 0b01 = topright, 0b10 = bottomleft, 0b11 = bottomright
-			ubyte quadrant = (((y / 8u) % 2u) << 2u) | (x / 8u) % 2;
+			ubyte quadrant = (((y / 16u) % 2u) << 1u) | (x / 16u) % 2u;
 
 			ubyte subPaletteIndex = (palette4x4Tiles >> (quadrant * 2)) & (0x03);
 
