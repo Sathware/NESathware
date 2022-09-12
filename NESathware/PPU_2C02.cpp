@@ -180,7 +180,7 @@ void PPU_2C02::RenderSliver(unsigned int pixel_xStart, unsigned int pixel_y, uby
 
 void PPU_2C02::DisplayCHRROM()
 {
-	for (unsigned int patternIndex = 0; patternIndex < 512u; ++patternIndex)
+	for (unsigned int patternIndex = 0x0u; patternIndex < 0x200u; ++patternIndex)
 	{
 		unsigned int x = (patternIndex % 32) * 8;
 		unsigned int y = (patternIndex / 32) * 8;

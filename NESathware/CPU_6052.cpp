@@ -15,7 +15,9 @@ void CPU_6052::Execute()
 		return;
 	}
 
-	ubyte2 currAddress = ProgramCounter;
+	//ubyte2 currAddress = ProgramCounter;
+	//if (currAddress == 0xf21cu/*0xf1ecu*/)
+		//int x = 5;
 
 	ubyte opcode = Read(ProgramCounter);
 	const Instruction& instruction = Instructions[opcode];
@@ -208,8 +210,8 @@ CPU_6052::Operand CPU_6052::IIY()
 	ubyte pAddress = Read(ProgramCounter);
 	++ProgramCounter;
 
-	ubyte2 addressLow = Read(pAddress);
-	ubyte2 addressHigh = Read(ubyte(pAddress + 1u));//Wraps pAddress as per specification which is handled automatically by unsigned arithmetic
+	ubyte addressLow = Read(pAddress);
+	ubyte addressHigh = Read(ubyte(pAddress + 1u));//Wraps pAddress as per specification which is handled automatically by unsigned arithmetic
 	ubyte2 address = CombineBytes(addressHigh, addressLow);
 
 	ubyte deltaCycles = 0;
@@ -369,13 +371,12 @@ void CPU_6052::TSX(Operand&)
 void CPU_6052::ADC(Operand& operand)
 {
 	ubyte data = Read(operand.address);
-	//Conversion to byte then byte2 is done, so that when the values get widened, the 2's complement representation is preserved i.e. padding is f not 0;
-	//Casting right to byte2 will pad with 0, not preserving 2's complement, e.g. 0xf0 will become 0x00f0 not 0xfff0
-	sbyte2 temp = (sbyte2)(sbyte)Accumulator + (sbyte2)(sbyte)data + (sbyte2)(sbyte)IsSet(Carry);
-	Accumulator = ubyte(temp & 0x00ff);
+	ubyte2 temp = (ubyte2)Accumulator + (ubyte2)data + (ubyte2)IsSet(Carry);
 
-	SetFlagTo(Carry, IsBitOn<8>((ubyte2)temp));//Value exceeds 255, i.e 8th bit is set
-	SetFlagTo(Overflow, temp > 127 || temp < -128);//result cannot be respresented in one byte
+	SetFlagTo(Carry, IsBitOn<8>((ubyte2)temp));//Value exceeds 8-bit bounds, i.e 8th bit is set
+	SetFlagTo(Overflow, (GetMSB(Accumulator) == GetMSB(data)) && (GetMSB(Accumulator) != IsBitOn<7>(temp)));//result cannot be respresented in one byte
+
+	Accumulator = ubyte(temp);
 	SetFlagTo(Zero, Accumulator == 0);
 	SetFlagTo(Negative, GetMSB(Accumulator) != 0);
 }
@@ -384,13 +385,14 @@ void CPU_6052::SBC(Operand& operand)
 {
 	ubyte data = Read(operand.address);
 
-	sbyte2 temp = (sbyte2)(sbyte)Accumulator - (sbyte2)(sbyte)data - (sbyte2)(sbyte)(!IsSet(Carry));
-	Accumulator = ubyte(temp & 0x00ff);
+	ubyte2 temp = (ubyte2)Accumulator - (ubyte2)data - (ubyte2)(!IsSet(Carry));
 
 	//Set if borrowing did not occur, else clear, borrowing did not occur if 8th bit of temp == 1
 	//borrow is complement of carry
 	SetFlagTo(Carry, !IsBitOn<8>(temp));
-	SetFlagTo(Overflow, temp > 127 || temp < -128);
+	SetFlagTo(Overflow, (GetMSB(Accumulator) == GetMSB(data)) && (GetMSB(Accumulator) != IsBitOn<7>(temp)));
+
+	Accumulator = ubyte(temp);
 	SetFlagTo(Zero, Accumulator == 0);
 	SetFlagTo(Negative, GetMSB(Accumulator));
 }

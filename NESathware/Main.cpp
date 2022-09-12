@@ -19,12 +19,12 @@ int main()
         NES nes("DonkeyKong.nes", directXGFX);
         Timer timer;
 
-        nes.mPPU.DisplayCHRROM();
-        directXGFX.Render();
+        /*nes.mPPU.DisplayCHRROM();
+        directXGFX.Render();*/
 
         while (desktopWindow.IsRunning())
         {
-            //nes.Run(timer.GetElapsedSeconds());
+            nes.Run(timer.GetElapsedSeconds());
         }
     }
     catch (Exception& e)
