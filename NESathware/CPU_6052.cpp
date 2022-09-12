@@ -7,13 +7,20 @@
 
 /* IMPORTANT NOTE: INC, DEC, LSR, ASL, ROL, ROR simulate data reads even though they modify the data, which may or may not cause issues with PPU addressing */
 
-ubyte CPU_6052::Execute()
+void CPU_6052::Execute()
 {
-	//static int cycleCount = 0;
+	if (mWaitCycles > 0)
+	{
+		--mWaitCycles;
+		return;
+	}
+
+	//ubyte2 currAddress = ProgramCounter;
+	//if (currAddress == 0xf21cu/*0xf1ecu*/)
+		//int x = 5;
+
 	ubyte opcode = Read(ProgramCounter);
 	const Instruction& instruction = Instructions[opcode];
-	
-	std::string debugString = std::format("Memory: {:#06x}    Opcode: {:#04x}    Name: {}", ProgramCounter, opcode, instruction.Name);
 	
 	if (instruction.Operation == nullptr)
 		throw std::runtime_error("Invalid Opcode!");
@@ -22,21 +29,22 @@ ubyte CPU_6052::Execute()
 	(this->*instruction.Operation)(operand);
 	
 	//cycleCount += instruction.baseCycles + operand.deltaCycles;
-	debugString = std::format("{}    DataAddress: {:#06x}\n", debugString, operand.address);
-	std::cout << debugString;
+	//std::cout << std::format("Memory: {:#06x}    Opcode: {:#04x}    Name: {}    DataAddress: {:#06x}\n", currAddress, opcode, instruction.Name, operand.address);
 
-	return instruction.baseCycles + operand.deltaCycles;
+	mWaitCycles += instruction.baseCycles + operand.deltaCycles;
+	/*return instruction.baseCycles + operand.deltaCycles;*/
 }
 
 void CPU_6052::Reset()
 {
 	SetFlag(InterruptDisable);
-	ubyte2 programCounterLow = Read(0xfffc);
-	ubyte2 programCounterHigh = Read(0xfffd);
-	ProgramCounter = (programCounterHigh << 8) | programCounterLow;//combine
+	SetFlag(Break);
+	ubyte2 startLow = Read(0xfffc);
+	ubyte2 startHigh = Read(0xfffd);
+	ProgramCounter = CombineBytes(startHigh, startLow);
 }
 
-ubyte CPU_6052::NMI()
+void CPU_6052::NMI()
 {
 	//unmaskable interrupt handlers are stored in another address
 	//and are not affected by Interrupt disable flag
@@ -48,10 +56,10 @@ ubyte CPU_6052::NMI()
 	ubyte2 pInterruptHandlerHigh = Read(0xfffb);
 	ubyte2 pInterruptHandler = (pInterruptHandlerHigh << 8) | pInterruptHandlerLow;
 	ProgramCounter = pInterruptHandler;
-	return 7;//Number of cycles for an interrupt to be processed
+	mWaitCycles += 7;//Number of cycles for an interrupt to be processed
 }
 
-ubyte CPU_6052::IRQ()
+void CPU_6052::IRQ()
 {
 	if (!IsSet(InterruptDisable))
 	{
@@ -63,9 +71,8 @@ ubyte CPU_6052::IRQ()
 		ubyte2 pInterruptHandlerHigh = Read(0xffff);
 		ubyte2 pInterruptHandler = (pInterruptHandlerHigh << 8) | pInterruptHandlerLow;
 		ProgramCounter = pInterruptHandler;
-		return 7;//Number of cycles for an interrupt to be processed
+		mWaitCycles += 7;//Number of cycles for an interrupt to be processed
 	}
-	return 0;
 }
 
 ubyte CPU_6052::Read(ubyte2 address)
@@ -173,7 +180,7 @@ CPU_6052::Operand CPU_6052::REL()
 	ubyte2 offset = Read(ProgramCounter);//offset is a signed 2's complement byte (-128 to 127)
 	++ProgramCounter;//Point to next instruction
 
-	if (isBitOn<7>(offset))//if offset is negative the most significant digit will be 1
+	if (IsBitOn<7>(offset))//if offset is negative the most significant digit will be 1
 		offset |= 0xff00;//preserve 2's complement representation
 
 	ubyte deltaCycles = 0;
@@ -203,8 +210,8 @@ CPU_6052::Operand CPU_6052::IIY()
 	ubyte pAddress = Read(ProgramCounter);
 	++ProgramCounter;
 
-	ubyte2 addressLow = Read(pAddress);
-	ubyte2 addressHigh = Read(ubyte(pAddress + 1u));//Wraps pAddress as per specification which is handled automatically by unsigned arithmetic
+	ubyte addressLow = Read(pAddress);
+	ubyte addressHigh = Read(ubyte(pAddress + 1u));//Wraps pAddress as per specification which is handled automatically by unsigned arithmetic
 	ubyte2 address = CombineBytes(addressHigh, addressLow);
 
 	ubyte deltaCycles = 0;
@@ -364,13 +371,12 @@ void CPU_6052::TSX(Operand&)
 void CPU_6052::ADC(Operand& operand)
 {
 	ubyte data = Read(operand.address);
-	//Conversion to byte then byte2 is done, so that when the values get widened, the 2's complement representation is preserved i.e. padding is f not 0;
-	//Casting right to byte2 will pad with 0, not preserving 2's complement, e.g. 0xf0 will become 0x00f0 not 0xfff0
-	byte2 temp = (byte2)(byte)Accumulator + (byte2)(byte)data + (byte2)(byte)IsSet(Carry);
-	Accumulator = ubyte(temp & 0x00ff);
+	ubyte2 temp = (ubyte2)Accumulator + (ubyte2)data + (ubyte2)IsSet(Carry);
 
-	SetFlagTo(Carry, isBitOn<8>((ubyte2)temp));//Value exceeds 255, i.e 8th bit is set
-	SetFlagTo(Overflow, temp > 127 || temp < -128);//result cannot be respresented in one byte
+	SetFlagTo(Carry, IsBitOn<8>((ubyte2)temp));//Value exceeds 8-bit bounds, i.e 8th bit is set
+	SetFlagTo(Overflow, (GetMSB(Accumulator) == GetMSB(data)) && (GetMSB(Accumulator) != IsBitOn<7>(temp)));//result cannot be respresented in one byte
+
+	Accumulator = ubyte(temp);
 	SetFlagTo(Zero, Accumulator == 0);
 	SetFlagTo(Negative, GetMSB(Accumulator) != 0);
 }
@@ -379,13 +385,14 @@ void CPU_6052::SBC(Operand& operand)
 {
 	ubyte data = Read(operand.address);
 
-	byte2 temp = (byte2)(byte)Accumulator - (byte2)(byte)data - (byte2)(byte)(!IsSet(Carry));
-	Accumulator = ubyte(temp & 0x00ff);
+	ubyte2 temp = (ubyte2)Accumulator - (ubyte2)data - (ubyte2)(!IsSet(Carry));
 
 	//Set if borrowing did not occur, else clear, borrowing did not occur if 8th bit of temp == 1
 	//borrow is complement of carry
-	SetFlagTo(Carry, !isBitOn<8>(temp));
-	SetFlagTo(Overflow, temp > 127 || temp < -128);
+	SetFlagTo(Carry, !IsBitOn<8>(temp));
+	SetFlagTo(Overflow, (GetMSB(Accumulator) == GetMSB(data)) && (GetMSB(Accumulator) != IsBitOn<7>(temp)));
+
+	Accumulator = ubyte(temp);
 	SetFlagTo(Zero, Accumulator == 0);
 	SetFlagTo(Negative, GetMSB(Accumulator));
 }
@@ -502,8 +509,8 @@ void CPU_6052::BIT(Operand& operand)
 {
 	ubyte data = Read(operand.address);
 	ubyte temp = Accumulator & data;
-	SetFlagTo(Negative, GetMSB(temp));
-	SetFlagTo(Overflow, isBitOn<6>(temp));//Check the 6th bit of temp
+	SetFlagTo(Negative, GetMSB(data));
+	SetFlagTo(Overflow, IsBitOn<6>(data));//Overflow flag is set to 6th bit
 	SetFlagTo(Zero, temp == 0);
 }
 

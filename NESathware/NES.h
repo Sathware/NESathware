@@ -9,19 +9,37 @@
 class NES
 {
 public:
-	NES(std::string romFileName, ubyte2 cpuStartOverride)
-		: mBus(), mpCartridge(LoadRom(romFileName)), mCPU(mBus, cpuStartOverride), mPPU(mBus), mAPU(mBus)
+	NES(std::string romFileName, class Graphics& gfx)
+		: mBus(), mpCartridge(LoadRom(romFileName)), mCPU(mBus), mPPU(mBus, gfx), mAPU(mBus)
 	{
 		mBus.mpCartridge = mpCartridge.get();
 		mBus.mpCPU = &mCPU;
 		mBus.mpPPU = &mPPU;
 		mBus.mpAPU = &mAPU;
+		mCPU.Reset();
 	}
 
-	void Execute()
+	void Run(float dt)
 	{
-		mCPU.Execute();
+		if (dt > 1)
+			dt = 0.00000056f;
+
+		for (; dt > 0; dt -= 0.00000056f)
+		{
+			//3 PPU clock cycles = 1 CPU clock cycle
+			mPPU.Execute();
+			mPPU.Execute();
+			mPPU.Execute();
+			mCPU.Execute();
+		}
 	}
+
+	BUS mBus;
+	std::unique_ptr<Mapper> mpCartridge;//NES Cartridge
+	CPU_6052 mCPU;//NES Central Processing Unit
+	PPU_2C02 mPPU;//NES Picture Processing Unit
+	APU_2A03 mAPU;//NES Audio Processing Unit
+private:
 
 	std::unique_ptr<Mapper> LoadRom(std::string filename)
 	{
@@ -34,7 +52,18 @@ public:
 
 		//------------TODO: Do stuff with trainer if present
 
-		ubyte mapperNum = (header.flags7 & 0xf0) | (header.flags6 >> 4);
+		ubyte mapperNum = (header.flags7 & 0xf0u) | (header.flags6 >> 4u);
+		assert(mapperNum == 0);
+
+		if (IsBitOn<0>(header.flags6))
+		{
+			mBus.Mirror = [](ubyte2 address) {return address % 0x800u; };
+		}
+		else
+		{
+			//mBus.Mirror = [](ubyte2 address) {return address % 0x800u; };
+			mBus.Mirror = [](ubyte2 address) { return 0x400 * (address >= 0x2800u) + address % 0x400u; };
+		}
 
 		switch (mapperNum)
 		{
@@ -43,11 +72,4 @@ public:
 		default: return nullptr;
 		}
 	}
-
-private:
-	BUS mBus;
-	std::unique_ptr<Mapper> mpCartridge;//NES Cartridge
-	CPU_6052 mCPU;//NES Central Processing Unit
-	PPU_2C02 mPPU;//NES Picture Processing Unit
-	APU_2A03 mAPU;//NES Audio Processing Unit
 };

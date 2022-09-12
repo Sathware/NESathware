@@ -362,3 +362,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /NESathware/DonkeyKong.nes
+/cc65
+/NESathware/CPU_LOG.txt
+/NESathware/spritemovement.nes
+/NESathware/DonkeyKong - Nametable RAM.hex
