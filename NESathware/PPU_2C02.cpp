@@ -139,7 +139,6 @@ void PPU_2C02::RenderBackground()
 	{
 		for (unsigned int x = 0; x < 256; x += 8u)
 		{
-
 			//Map screen coordinates (0 - 255, 0 - 239) to nametable coordinates (0 - 31, 0 - 29)
 			ubyte2 nametableIndex = ((y / 8u) * 32u) + (x / 8u);
 			//Each nametable entry is 1 byte, so the address of the pattern table index is base + nametableindex * sizeof(byte)
@@ -157,7 +156,7 @@ void PPU_2C02::RenderBackground()
 			ubyte palette4x4Tiles = Read(attributeTableStart + attributeTableIndex);
 			//0b00 = topleft, 0b01 = topright, 0b10 = bottomleft, 0b11 = bottomright
 			ubyte quadrant = (((y / 16u) % 2u) << 1u) | (x / 16u) % 2u;
-
+			//Calculate mPaletteRam index by getting appropriate quadrant values from attribute table data (i.e. palette4x4tiles)
 			ubyte subPaletteIndex = (palette4x4Tiles >> (quadrant * 2)) & (0x03);
 
 			SubPalette& subPalette = reinterpret_cast<SubPalette*>(mPaletteRAM)[subPaletteIndex];
