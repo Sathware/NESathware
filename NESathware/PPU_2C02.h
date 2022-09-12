@@ -11,7 +11,8 @@ public:
 	ubyte ReadRegister(ubyte2 address);
 	//Source: "https://www.nesdev.org/wiki/PPU_registers"
 	void WriteRegister(ubyte val, ubyte2 address);
-
+	//Bulk transfer OAM Data from CPU RAM to PPU
+	void WriteOAMDMA(ubyte* data);
 	/*Debug*/
 	void DisplayCHRROM();
 private:
@@ -25,13 +26,23 @@ private:
 		//ColorIndexes[1 to 3] = color indexes for mSystemPalette
 		ubyte ColorIndexes[4];
 	};
+	//The OAM contains sprite data, 4 bytes per sprite, that describe the (x, y) position and pattern tile index and other flags
+	struct Sprite
+	{
+		ubyte PosYTop;
+		ubyte TileIndex;
+		ubyte Attributes;
+		ubyte PosXLeft;
+	};
 
 	/*Rendering*/
 	unsigned int mCurrentScanLine = 0;
 	unsigned int mCurrentCycle = 0;
 	//Render background, Background Info: "https://austinmorlan.com/posts/nes_rendering_overview/", "https://www.nesdev.org/wiki/Blargg_PPU", "https://www.nesdev.org/wiki/PPU_registers", "https://www.nesdev.org/wiki/PPU_nametables", "https://www.nesdev.org/wiki/PPU_pattern_tables"
 	void RenderBackground();
-	void RenderSliver(unsigned int pixel_xStart, unsigned int pixel_y, ubyte patternLow, ubyte patternHigh, SubPalette& subPalette);
+	//Render Sprites, Source: "https://famicom.party/book/10-spritegraphics/"
+	void RenderSprites();
+	void RenderSliver(const unsigned int pixel_xStart, const unsigned int pixel_y, const ubyte patternLow, const ubyte patternHigh, const SubPalette& subPalette);
 
 	/* Helper Functions */
 	bool isVBLANK()
@@ -62,26 +73,11 @@ private:
 	//Used to simulate read buffer used internally in NES
 	ubyte mReadBuffer = 0;
 
-	/*struct Sprite
-	{
-		ubyte PosYTop;
-		ubyte TileIndex;
-		ubyte Attributes;
-		ubyte PosXLeft;
-	};
-    struct SubPalette
-    {
-        ubyte BackgroundIndex;
-        ubyte Color1Index;
-        ubyte Color2;
-        ubyte Color3;
-    };*/
-
 	//Object Attribute Memory
 	ubyte mOAM[256u] = { 0 };
 	//Pallette
 	ubyte mPaletteRAM[32u] = { 0 };
-	ubyte greyPalette[4u] = { 15u, 32u, 16u, 0u };//black, white, grey, dark grey
+	ubyte mGreyPalette[4u] = { 15u, 32u, 16u, 0u };//black, white, grey, dark grey
 	const Color mSystemPalette[64u] =
 	{
 		//{r,g,b,a}

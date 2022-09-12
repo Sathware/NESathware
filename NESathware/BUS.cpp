@@ -2,29 +2,29 @@
 
 ubyte BUS::ReadCPU(ubyte2 address)
 {
-	if (address < 0x2000)
+	if (address < 0x2000u)
 	{
 		//2KB internal RAM and mirrors
 		ubyte2 index = address % 0x0800u;
 		return mRAM.at(index);
 	}
-	else if (address < 0x4000)
+	else if (address < 0x4000u)
 	{
 		//PPU registers and mirrors
 		return mpPPU->ReadRegister(address);
 	}
-	else if (address < 0x4018)
+	else if (address < 0x4018u)
 	{
 		//APU and I/O registers
 		return 0;//----TEMPORARY
 	}
-	else if (address < 0x4020)
+	else if (address < 0x4020u)
 	{
 		//Disabled
 		throw std::runtime_error("Tried to read disabled APU and I/O address");
 		return 0;
 	}
-	else if (address <= 0xffff)
+	else if (address <= 0xffffu)
 	{
 		//Cartridge space
 		return mpCartridge->ReadCPU(address);
@@ -39,21 +39,23 @@ void BUS::WriteCPU(ubyte val, ubyte2 address)
 		ubyte2 index = address % 0x0800u;
 		mRAM.at(index) = val;
 	}
-	else if (address < 0x4000)
+	else if (address < 0x4000u)
 	{
 		//PPU registers and mirrors
 		mpPPU->WriteRegister(val, address);
 	}
-	else if (address < 0x4018)
+	else if (address < 0x4018u)
 	{
 		//APU and I/O registers
+		if (address == 0x4014u)
+			mpPPU->WriteOAMDMA(&mRAM[ubyte2(val) << 8u]);
 	}
-	else if (address < 0x4020)
+	else if (address < 0x4020u)
 	{
 		//Disabled
 		throw std::runtime_error("Tried to read disabled APU and I/O address");
 	}
-	else if (address <= 0xffff)
+	else if (address <= 0xffffu)
 	{
 		//Cartridge space
 		mpCartridge->WriteCPU(val, address);
