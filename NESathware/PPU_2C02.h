@@ -2,6 +2,8 @@
 #include "CommonTypes.h"
 #include "../SathwareEngine/Graphics.h"
 
+/* TODO: Finish implementing sprite flags, implement 8x16 sprite mode, implement max 8 sprites per scanline bug, implement sprite overflow bug */
+
 class PPU_2C02
 {
 public:
@@ -16,7 +18,7 @@ public:
 	/*Debug*/
 	void DisplayCHRROM();
 private:
-	BUS& bus;
+	BUS& Bus;
 	Graphics& gfx;
 
 	//A subpalette is 4 bytes long, and houses indexes into the system palette

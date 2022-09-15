@@ -2,7 +2,7 @@
 #include "BUS.h"
 
 PPU_2C02::PPU_2C02(BUS& bus, Graphics& gfx)
-	: bus(bus), gfx(gfx)
+	: Bus(bus), gfx(gfx)
 {}
 
 void PPU_2C02::Execute()
@@ -12,7 +12,7 @@ void PPU_2C02::Execute()
 		//Create NMI and set VBLANK bit
 		mPPUSTATUS |= 0x80;
 		if (createNMIOnVBLANK())
-			bus.InvokeNMI();
+			Bus.InvokeNMI();
 
 		RenderBackground();
 		RenderSprites();
@@ -257,10 +257,10 @@ void PPU_2C02::DisplayCHRROM()
 
 ubyte PPU_2C02::Read(ubyte2 address)
 {
-	return bus.ReadPPU(address);
+	return Bus.ReadPPU(address);
 }
 
 void PPU_2C02::Write(ubyte val, ubyte2 address)
 {
-	bus.WritePPU(val, address);
+	Bus.WritePPU(val, address);
 }
