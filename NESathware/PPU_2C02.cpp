@@ -191,7 +191,15 @@ void PPU_2C02::RenderSprites()
 		if (sprites[i].PosYTop > 232u)
 			continue;
 
-		for (unsigned int tileRow = 0; tileRow < 8; ++tileRow)
+		//flip horizontally flag
+		const bool hFlip = IsBitOn<6>(sprites[i].Attributes);
+		//flip vertically flag
+		const bool vFlip = IsBitOn<7>(sprites[i].Attributes);
+
+		//if vFlip is set, tileRow will gor from 7 to 0 else tileCol will go from 0 to 7
+		const int rowEnd = (vFlip ? -1 : 8);
+		const int deltaRow = (vFlip ? -1 : 1);
+		for (int tileRow = (vFlip ? 7 : 0), yOffset = 0; tileRow != rowEnd; tileRow += deltaRow, ++yOffset)
 		{
 			const ubyte patternLow = Read(basePatternTableAddress + sprites[i].TileIndex * 16u + tileRow);
 			const ubyte patternHigh = Read(basePatternTableAddress + sprites[i].TileIndex * 16u + tileRow + 8u);
@@ -199,14 +207,17 @@ void PPU_2C02::RenderSprites()
 			//bits 0-1 of sprite attributes contain sub palette index, and sprite sub palettes start at 16 bytes into palette ram
 			const SubPalette& subPalette = reinterpret_cast<SubPalette*>(&mPaletteRAM[16u])[sprites[i].Attributes & 0x03];
 
-			for (unsigned int tileCol = 0; tileCol < 8; ++tileCol)
+			//if hFlip is set, tileCol will go from 7 to 0 else tileCol will go from 0 to 7
+			const int colEnd = (hFlip ? -1:8);
+			const int deltaCol = (hFlip ? -1:1);
+			for (int tileCol = (hFlip ? 7:0), xOffset = 0; tileCol != colEnd; tileCol += deltaCol, ++xOffset)
 			{
 				ubyte subPaletteColorIndex = ((ubyte)IsBitOn(7 - tileCol, patternHigh) << 1u) | (ubyte)IsBitOn(7 - tileCol, patternLow);
 				//background color indexes in subpalette are mirrors of background index in subpalette 0
 				if (subPaletteColorIndex != 0)
 				{
 					ubyte systemPaletteIndex = subPalette.ColorIndexes[subPaletteColorIndex];
-					gfx.PutPixel(sprites[i].PosXLeft + tileCol, sprites[i].PosYTop + tileRow, mSystemPalette[systemPaletteIndex]);
+					gfx.PutPixel(sprites[i].PosXLeft + xOffset, sprites[i].PosYTop + yOffset, mSystemPalette[systemPaletteIndex]);
 				}
 			}
 		}

@@ -3,6 +3,8 @@
 #include "../SathwareEngine/DesktopWindow.h"
 #include "../SathwareEngine/Graphics.h"
 #include "../SathwareEngine/Timer.h"
+#include <iostream>
+#include <iomanip>
 
 int main()
 {

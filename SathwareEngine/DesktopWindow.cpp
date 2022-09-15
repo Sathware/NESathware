@@ -103,3 +103,8 @@ DesktopWindow::DesktopWindow(unsigned int clientWidth, unsigned int clientHeight
 	ShowWindow(m_windowHandle, SW_SHOWDEFAULT);
 	//UpdateWindow(m_windowHandle);
 }
+
+bool DesktopWindow::KeyIsPressed(int virtualKeyCode)
+{
+	return GetKeyState(virtualKeyCode) & 0x8000;
+}
