@@ -5,17 +5,19 @@
 #include "Mapper.h"
 #include "PPU_2C02.h"
 #include "APU_2A03.h"
+#include "Controller.h"
 
 class NES
 {
 public:
-	NES(std::string romFileName, class Graphics& gfx)
-		: mBus(), mpCartridge(LoadRom(romFileName)), mCPU(mBus), mPPU(mBus, gfx), mAPU(mBus)
+	NES(std::string romFileName, class Graphics& gfx, class DesktopWindow& window)
+		: mBus(), mpCartridge(LoadRom(romFileName)), mCPU(mBus), mPPU(mBus, gfx), mAPU(mBus), mController(mBus, window)
 	{
 		mBus.mpCartridge = mpCartridge.get();
 		mBus.mpCPU = &mCPU;
 		mBus.mpPPU = &mPPU;
 		mBus.mpAPU = &mAPU;
+		mBus.mpController = &mController;
 		mCPU.Reset();
 	}
 
@@ -26,11 +28,13 @@ public:
 
 		for (; dt > 0; dt -= 0.00000056f)
 		{
+			//Poll user input
+			mController.Execute();
+			mCPU.Execute();
 			//3 PPU clock cycles = 1 CPU clock cycle
 			mPPU.Execute();
 			mPPU.Execute();
 			mPPU.Execute();
-			mCPU.Execute();
 		}
 	}
 
@@ -39,6 +43,7 @@ public:
 	CPU_6052 mCPU;//NES Central Processing Unit
 	PPU_2C02 mPPU;//NES Picture Processing Unit
 	APU_2A03 mAPU;//NES Audio Processing Unit
+	Controller mController;
 private:
 
 	std::unique_ptr<Mapper> LoadRom(std::string filename)

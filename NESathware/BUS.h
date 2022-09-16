@@ -3,6 +3,7 @@
 #include "CPU_6052.h"
 #include "PPU_2C02.h"
 #include "APU_2A03.h"
+#include "Controller.h"
 #include "Mapper.h"
 #include <array>
 #include <functional>
@@ -22,10 +23,11 @@ public:
 		mpCPU->NMI();
 	}
 public:
+	Mapper* mpCartridge = nullptr;
 	CPU_6052* mpCPU = nullptr;
 	PPU_2C02* mpPPU = nullptr;
 	APU_2A03* mpAPU = nullptr;
-	Mapper* mpCartridge = nullptr;
+	Controller* mpController = nullptr;
 	std::function<ubyte2(ubyte2)> Mirror;
 	//2KB onboard ram and rest of address space
 	std::array<ubyte, 0x0800u> mRAM = { 0 };

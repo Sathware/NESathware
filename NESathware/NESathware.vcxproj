@@ -157,6 +157,7 @@
   <ItemGroup>
     <ClCompile Include="APU_2A03.cpp" />
     <ClCompile Include="BUS.cpp" />
+    <ClCompile Include="Controller.cpp" />
     <ClCompile Include="CPU_6052.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Mapper.cpp" />
@@ -166,6 +167,7 @@
     <ClInclude Include="APU_2A03.h" />
     <ClInclude Include="BUS.h" />
     <ClInclude Include="CommonTypes.h" />
+    <ClInclude Include="Controller.h" />
     <ClInclude Include="CPU_6052.h" />
     <ClInclude Include="Mapper.h" />
     <ClInclude Include="NES.h" />

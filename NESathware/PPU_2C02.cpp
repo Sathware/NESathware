@@ -2,7 +2,7 @@
 #include "BUS.h"
 
 PPU_2C02::PPU_2C02(BUS& bus, Graphics& gfx)
-	: bus(bus), gfx(gfx)
+	: Bus(bus), gfx(gfx)
 {}
 
 void PPU_2C02::Execute()
@@ -12,7 +12,7 @@ void PPU_2C02::Execute()
 		//Create NMI and set VBLANK bit
 		mPPUSTATUS |= 0x80;
 		if (createNMIOnVBLANK())
-			bus.InvokeNMI();
+			Bus.InvokeNMI();
 
 		RenderBackground();
 		RenderSprites();
@@ -178,6 +178,7 @@ void PPU_2C02::RenderBackground()
 	}
 }
 
+//TODO - Just display part of sprite that is not overbounds
 void PPU_2C02::RenderSprites()
 {
 	//OAM data as Sprite array
@@ -187,8 +188,8 @@ void PPU_2C02::RenderSprites()
 	//There is a maximum of 64 sprites on the screen
 	for (unsigned int i = 0; i < (64 - mOAMADDR / 4u); ++i)
 	{
-		//Skip if sprite is overbounds, TODO - Jusr display part of sprite that is not overbounds
-		if (sprites[i].PosYTop > 232u)
+		//Skip if sprite is overbounds
+		if (sprites[i].PosYTop > 232u || sprites[i].PosXLeft > 248)
 			continue;
 
 		//flip horizontally flag
@@ -257,10 +258,10 @@ void PPU_2C02::DisplayCHRROM()
 
 ubyte PPU_2C02::Read(ubyte2 address)
 {
-	return bus.ReadPPU(address);
+	return Bus.ReadPPU(address);
 }
 
 void PPU_2C02::Write(ubyte val, ubyte2 address)
 {
-	bus.WritePPU(val, address);
+	Bus.WritePPU(val, address);
 }

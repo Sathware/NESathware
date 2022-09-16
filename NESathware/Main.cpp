@@ -18,7 +18,7 @@ int main()
         DesktopWindow desktopWindow(256u, 240u, dllInstance, SW_NORMAL);
         Graphics directXGFX(desktopWindow);
 
-        NES nes("DonkeyKong.nes", directXGFX);
+        NES nes("DonkeyKong.nes", directXGFX, desktopWindow);
         Timer timer;
 
         /*nes.mPPU.DisplayCHRROM();
