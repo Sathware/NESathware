@@ -10,8 +10,8 @@
 class NES
 {
 public:
-	NES(std::string romFileName, class Graphics& gfx)
-		: mBus(), mpCartridge(LoadRom(romFileName)), mCPU(mBus), mPPU(mBus, gfx), mAPU(mBus), mController(mBus)
+	NES(std::string romFileName, class Graphics& gfx, class DesktopWindow& window)
+		: mBus(), mpCartridge(LoadRom(romFileName)), mCPU(mBus), mPPU(mBus, gfx), mAPU(mBus), mController(mBus, window)
 	{
 		mBus.mpCartridge = mpCartridge.get();
 		mBus.mpCPU = &mCPU;

@@ -19,7 +19,7 @@ public:
 	DesktopWindow(unsigned int clientWidth, unsigned int clientHeight, HINSTANCE hInstance, int nCmdShow, const std::wstring& windowTitle = L"Sathware Engine");
 
 	/*
-	* Check if a Key is pressed according to the Microsoft virtual key codes
+	* Check if a Key is pressed given the Microsoft virtual key code
 	*/
 	bool KeyIsPressed(int virtualKeyCode);
 

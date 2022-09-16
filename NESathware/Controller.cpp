@@ -1,5 +1,6 @@
 #include "Controller.h"
 #include "BUS.h"
+#include "..\SathwareEngine\DesktopWindow.h"
 
 void Controller::Execute()
 {
@@ -10,7 +11,7 @@ void Controller::Execute()
 		for (unsigned int mButtonIndex = 0; mButtonIndex < 8; ++mButtonIndex)
 		{
 			//if button is pressed
-			if (GetKeyState(mButtons[mButtonIndex]) & 0x8000)
+			if (Window.KeyIsPressed(mButtons[mButtonIndex]))
 				mInputState |= (1 << mButtonIndex);
 		}
 	}

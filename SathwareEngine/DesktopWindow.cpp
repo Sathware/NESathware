@@ -106,5 +106,10 @@ DesktopWindow::DesktopWindow(unsigned int clientWidth, unsigned int clientHeight
 
 bool DesktopWindow::KeyIsPressed(int virtualKeyCode)
 {
+	while (PeekMessageW(&m_windowsMessage, nullptr, 0, 0, PM_REMOVE | PM_QS_INPUT))
+	{
+		TranslateMessage(&m_windowsMessage);
+		DispatchMessageW(&m_windowsMessage);
+	}
 	return GetKeyState(virtualKeyCode) & 0x8000;
 }

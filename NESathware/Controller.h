@@ -4,8 +4,8 @@
 class Controller
 {
 public:
-	Controller(class BUS& Bus)
-		: Bus(Bus)
+	Controller(class BUS& bus, class DesktopWindow& window)
+		: Bus(bus), Window(window)
 	{}
 	void Execute();
 	//CPU tells controller to start or stop polling
@@ -14,6 +14,7 @@ public:
 	ubyte ReadCPU();
 private:
 	BUS& Bus;
+	DesktopWindow& Window;
 
 	//Dictates whether the controller is currently polling input or not
 	bool mPollFlag = false;
