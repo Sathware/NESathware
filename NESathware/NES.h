@@ -28,11 +28,13 @@ public:
 
 		for (; dt > 0; dt -= 0.00000056f)
 		{
+			//Poll user input
+			mController.Execute();
+			mCPU.Execute();
 			//3 PPU clock cycles = 1 CPU clock cycle
 			mPPU.Execute();
 			mPPU.Execute();
 			mPPU.Execute();
-			mCPU.Execute();
 		}
 	}
 

@@ -178,6 +178,7 @@ void PPU_2C02::RenderBackground()
 	}
 }
 
+//TODO - Just display part of sprite that is not overbounds
 void PPU_2C02::RenderSprites()
 {
 	//OAM data as Sprite array
@@ -187,8 +188,8 @@ void PPU_2C02::RenderSprites()
 	//There is a maximum of 64 sprites on the screen
 	for (unsigned int i = 0; i < (64 - mOAMADDR / 4u); ++i)
 	{
-		//Skip if sprite is overbounds, TODO - Jusr display part of sprite that is not overbounds
-		if (sprites[i].PosYTop > 232u)
+		//Skip if sprite is overbounds
+		if (sprites[i].PosYTop > 232u || sprites[i].PosXLeft > 248)
 			continue;
 
 		//flip horizontally flag
