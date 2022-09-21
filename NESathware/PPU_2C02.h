@@ -17,6 +17,8 @@ public:
 	void WriteOAMDMA(ubyte* data);
 	/*Debug*/
 	void DisplayCHRROM();
+	/*Emulation*/
+	ubyte2 nextNametableOffset;
 private:
 	BUS& Bus;
 	Graphics& gfx;
@@ -44,7 +46,6 @@ private:
 	void RenderBackground();
 	//Render Sprites, Source: "https://famicom.party/book/10-spritegraphics/"
 	void RenderSprites();
-	void RenderSliver(const unsigned int pixel_xStart, const unsigned int pixel_y, const ubyte patternLow, const ubyte patternHigh, const SubPalette& subPalette);
 
 	/* Helper Functions */
 	bool isVBLANK()
