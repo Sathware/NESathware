@@ -11,7 +11,7 @@ class NES
 {
 public:
 	NES(std::string romFileName, class Graphics& gfx, class DesktopWindow& window)
-		: mBus(), mpCartridge(LoadRom(romFileName)), mCPU(mBus), mPPU(mBus, gfx), mAPU(mBus), mController(mBus, window)
+		: mBus(), mCPU(mBus), mPPU(mBus, gfx), mAPU(mBus), mController(mBus, window), mpCartridge(LoadRom(romFileName))
 	{
 		mBus.mpCartridge = mpCartridge.get();
 		mBus.mpCPU = &mCPU;
@@ -39,11 +39,11 @@ public:
 	}
 
 	BUS mBus;
-	std::unique_ptr<Mapper> mpCartridge;//NES Cartridge
 	CPU_6052 mCPU;//NES Central Processing Unit
 	PPU_2C02 mPPU;//NES Picture Processing Unit
 	APU_2A03 mAPU;//NES Audio Processing Unit
 	Controller mController;
+	std::unique_ptr<Mapper> mpCartridge;//NES Cartridge
 private:
 
 	std::unique_ptr<Mapper> LoadRom(std::string filename)
@@ -62,12 +62,15 @@ private:
 
 		if (IsBitOn<0>(header.flags6))
 		{
+			//Horizontal arrangement
 			mBus.Mirror = [](ubyte2 address) {return address % 0x800u; };
+			mPPU.nextNametableOffset = 0x400u;
 		}
 		else
 		{
-			//mBus.Mirror = [](ubyte2 address) {return address % 0x800u; };
+			//Vertical Arrrangement
 			mBus.Mirror = [](ubyte2 address) { return 0x400 * (address >= 0x2800u) + address % 0x400u; };
+			mPPU.nextNametableOffset = 0x800u;
 		}
 
 		switch (mapperNum)
