@@ -2,6 +2,7 @@
 #include "../SathwareEngine/SathwareEngine.h"
 #include "../SathwareEngine/DesktopWindow.h"
 #include "../SathwareEngine/Graphics.h"
+#include "../SathwareEngine/Audio.h"
 #include "../SathwareEngine/Timer.h"
 #include <iostream>
 #include <iomanip>
@@ -17,8 +18,9 @@ int main()
 
         DesktopWindow desktopWindow(256u, 240u, dllInstance, SW_NORMAL);
         Graphics directXGFX(desktopWindow);
-
-        NES nes("DonkeyKong.nes", directXGFX, desktopWindow);
+        Audio audio;
+        audio.PlaySine();
+        // NES nes("DonkeyKong.nes", directXGFX, desktopWindow);
         Timer timer;
 
         /*nes.mPPU.DisplayCHRROM();
@@ -26,7 +28,7 @@ int main()
 
         while (desktopWindow.IsRunning())
         {
-            nes.Run(timer.GetElapsedSeconds());
+            // nes.Run(timer.GetElapsedSeconds());
         }
     }
     catch (Exception& e)

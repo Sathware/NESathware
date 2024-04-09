@@ -13,12 +13,6 @@
 #include <d3dcompiler.h>
 #include <d3d11sdklayers.h>
 
-#if defined(DEBUG) || defined(_DEBUG)
-#define ThrowIfFailed(result, string) if(FAILED(result)) throw Exception(string);
-#else
-#define ThrowIfFailed(result, string) 
-#endif
-
 Graphics::Graphics(const DesktopWindow& window)
 	: m_width(window.mClientWidth), m_height(window.mClientHeight), 
 	frameImage(new Color[m_width*m_height])

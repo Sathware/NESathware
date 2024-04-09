@@ -11,12 +11,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Audio.cpp" />
     <ClCompile Include="Color.cpp" />
     <ClCompile Include="DesktopWindow.cpp" />
     <ClCompile Include="DLLMain.cpp" />
     <ClCompile Include="Graphics.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Audio.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="DesktopWindow.h" />
     <ClInclude Include="Graphics.h" />

@@ -7,5 +7,7 @@ public:
 	{}
 private:
 	BUS& bus;
+
+
 };
 
