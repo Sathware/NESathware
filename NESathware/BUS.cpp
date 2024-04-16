@@ -48,31 +48,33 @@ void BUS::WriteCPU(ubyte val, ubyte2 address)
 	else if (address < 0x4018u)
 	{
 		//APU and I/O registers
-		if (address < 0x4004u)
-		{
-			// Square 1
-		}
-		if (address < 0x4008u)
-		{
-			// Square 2
-		}
-		if (address < 0x400cu)
-		{
-			// Triangle
-		}
-		if (address < 0x4010u)
-		{
-			// Noise
-		}
-		if (address < 0x4014u)
-		{
-			// DMC
-		}
+		//if (address < 0x4004u)
+		//{
+		//	// Square 1
+		//}
+		//if (address < 0x4008u)
+		//{
+		//	// Square 2
+		//}
+		//if (address < 0x400cu)
+		//{
+		//	// Triangle
+		//}
+		//if (address < 0x4010u)
+		//{
+		//	// Noise
+		//}
+		//if (address < 0x4014u)
+		//{
+		//	// DMC
+		//}
 		
 		if (address == 0x4014u)
 			mpPPU->WriteOAMDMA(&mRAM[(unsigned int)val << 8u]);
 		else if (address == 0x4016u)
 			mpController->WriteCPU(val);
+		else
+			mpAPU->WriteRegister(val, address);
 	}
 	else if (address < 0x4020u)
 	{

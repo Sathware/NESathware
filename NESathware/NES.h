@@ -10,8 +10,8 @@
 class NES
 {
 public:
-	NES(std::string romFileName, class Graphics& gfx, class DesktopWindow& window)
-		: mBus(), mCPU(mBus), mPPU(mBus, gfx), mAPU(mBus), mController(mBus, window), mpCartridge(LoadRom(romFileName))
+	NES(std::string romFileName, class Graphics& gfx, class Audio& audio, class DesktopWindow& window)
+		: mBus(), mCPU(mBus), mPPU(mBus, gfx), mAPU(mBus, audio), mController(mBus, window), mpCartridge(LoadRom(romFileName))
 	{
 		mBus.mpCartridge = mpCartridge.get();
 		mBus.mpCPU = &mCPU;
@@ -23,14 +23,16 @@ public:
 
 	void Run(float dt)
 	{
-		if (dt > 1)
-			dt = 0.00000056f;
+		constexpr float timePerCPUCycle = 0.00000055873f;
+		if (dt > timePerCPUCycle)
+			dt = timePerCPUCycle;
 
-		for (; dt > 0; dt -= 0.00000056f)
+		for (; dt > 0; dt -= timePerCPUCycle)
 		{
 			//Poll user input
 			mController.Execute();
 			mCPU.Execute();
+			mAPU.Execute();
 			//3 PPU clock cycles = 1 CPU clock cycle
 			mPPU.Execute();
 			mPPU.Execute();

@@ -36,7 +36,7 @@ Audio::Audio()
 	// Fill audio data
 	for (unsigned int i = 0; i < sampleFrequency * 5; ++i)
 	{
-		float t = float(i) / 44100.0f;
+		float t = float(i) / 44100.0f; // The time in seconds
 		float freq = 220.0f;
 		constexpr float pi2 = 2.0f * float(std::numbers::pi);
 		// Reference: "https://thewolfsound.com/sine-saw-square-triangle-pulse-basic-waveforms-in-synthesis/#sine"
@@ -58,3 +58,18 @@ void Audio::PlaySine()
 	HRESULT result = mSourceVoice->SubmitSourceBuffer(&buffer);
 	ThrowIfFailed(result, L"Failed call to SubmitSourceBuffer to play sound!");
 }
+
+void Audio::PlaySoundData(const float seconds, const std::vector<float>& data)
+{
+	XAUDIO2_BUFFER buffer = { 0 };
+	buffer.AudioBytes = data.size() * bitsPerSample / 8;
+	buffer.pAudioData = reinterpret_cast<const byte*>(data.data());
+	buffer.Flags = XAUDIO2_END_OF_STREAM;
+	buffer.PlayBegin = 0;
+	buffer.PlayLength = data.size();
+
+	HRESULT result = mSourceVoice->SubmitSourceBuffer(&buffer);
+	ThrowIfFailed(result, L"Failed call to SubmitSourceBuffer to play sound!");
+}
+
+//void Audio::PlayWaveForm(float seconds, std::vector<float> buffer);

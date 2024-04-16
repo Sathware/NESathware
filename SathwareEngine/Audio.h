@@ -3,6 +3,7 @@
 #include <wrl.h>
 #include "SathwareException.h"
 #include "SathwareEngine.h"
+#include <vector>
 
 class SathwareAPI Audio
 {
@@ -10,6 +11,7 @@ public:
 	Audio();
 
 	void PlaySine();
+	void PlaySoundData(const float seconds, const std::vector<float>& data);
 
 	Audio(const Audio& other) = delete;
 	Audio(const Audio&& other) = delete;

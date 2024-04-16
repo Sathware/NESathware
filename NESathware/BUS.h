@@ -22,6 +22,10 @@ public:
 	{
 		mpCPU->NMI();
 	}
+	void InvokeIRQ()
+	{
+		mpCPU->IRQ();
+	}
 public:
 	Mapper* mpCartridge = nullptr;
 	CPU_6052* mpCPU = nullptr;

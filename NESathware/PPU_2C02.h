@@ -8,6 +8,7 @@ class PPU_2C02
 {
 public:
 	PPU_2C02(class BUS& bus, Graphics& gfx);
+	//Run one cycle of the PPU
 	void Execute();
 	//Source: "https://www.nesdev.org/wiki/PPU_registers"
 	ubyte ReadRegister(ubyte2 address);

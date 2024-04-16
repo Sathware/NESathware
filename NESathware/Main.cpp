@@ -18,9 +18,8 @@ int main()
 
         DesktopWindow desktopWindow(256u, 240u, dllInstance, SW_NORMAL);
         Graphics directXGFX(desktopWindow);
-        Audio audio;
-        audio.PlaySine();
-        // NES nes("DonkeyKong.nes", directXGFX, desktopWindow);
+        Audio xAudio2Engine;
+        NES nes("DonkeyKong.nes", directXGFX, xAudio2Engine, desktopWindow);
         Timer timer;
 
         /*nes.mPPU.DisplayCHRROM();
@@ -28,7 +27,7 @@ int main()
 
         while (desktopWindow.IsRunning())
         {
-            // nes.Run(timer.GetElapsedSeconds());
+            nes.Run(timer.GetElapsedSeconds());
         }
     }
     catch (Exception& e)
