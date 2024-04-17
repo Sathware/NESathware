@@ -33,10 +33,12 @@ int main()
     catch (Exception& e)
     {
         MessageBoxExW(nullptr, e.what(), nullptr, MB_OK, 0);
+        throw e;
     }
     catch (std::runtime_error& e)
     {
         MessageBoxA(nullptr, e.what(), nullptr, MB_OK);
+        throw e;
     }
 
     return 0;

@@ -3,54 +3,39 @@
 
 void APU_2A03::Execute()
 {
-	//Play sound for 0.00416589088f seconds
-	if (clockCount == (2.0f * 3729.0f))
-	{
-		// Step 1
-		mPulse1Envelope.Execute();
+	/* APU Frame Counter */
 
-		PlayIfValid();
+	if (mClockCount == (2u * 3729u))
+	{
+		mPulse1.QueueWaveform();
+		mPulse2.QueueWaveform();
 	}
-	if (clockCount == (2.0f * 7457.0f))
+	if (mClockCount == (2u * 7457u))
 	{
-		// Step 2
-		mPulse1Envelope.Execute();
+		mPulse1.mLengthCounter.Execute();
+		mPulse2.mLengthCounter.Execute();
 
-		mPulse1Sweep.Execute();
-
-		if (mPulse1LengthCounterFlag)
-			mPulse1LengthCounter = 0;
-		else
-			mPulse1LengthCounter = (mPulse1LengthCounter == 0) ? 0 : (mPulse1LengthCounter - 1);
-
-		PlayIfValid();
+		mPulse1.QueueWaveform();
+		mPulse2.QueueWaveform();
 	}
-	if (clockCount == (2.0f * 11186.0f))
+	if (mClockCount == (2u * 11186u))
 	{
-		// Step 3
-		mPulse1Envelope.Execute();
-
-		PlayIfValid();
+		mPulse1.QueueWaveform();
+		mPulse2.QueueWaveform();
 	}
-	if (clockCount == (2.0f * 14915.0f))
+	if ( (mClockCount == (2u * 14915u) && !mModeFlag) || (mClockCount == (2u * 18641u) && mModeFlag) )
 	{
-		// Step 4
-		mPulse1Envelope.Execute();
+		mPulse1.mLengthCounter.Execute();
+		mPulse2.mLengthCounter.Execute();
 
-		mPulse1Sweep.Execute();
+		mPulse1.QueueWaveform();
+		mPulse2.QueueWaveform();
 
-		if (mPulse1LengthCounterFlag)
-			mPulse1LengthCounter = 0;
-		else
-			mPulse1LengthCounter = (mPulse1LengthCounter == 0) ? 0 : (mPulse1LengthCounter - 1);
-
-		if (mInterruptFlag)
+		if (mInterruptFlag && !mModeFlag)
 			Bus.InvokeIRQ();
-
-		PlayIfValid();
 	}
 
-	clockCount = (clockCount + 1) % (2 * 14915);
+	mClockCount = (mClockCount + 1u) % (mModeFlag ? (2u * 18641u) : (2u * 14915u));
 }
 
 void APU_2A03::WriteRegister(ubyte val, ubyte2 address)
@@ -61,17 +46,20 @@ void APU_2A03::WriteRegister(ubyte val, ubyte2 address)
 		// Pulse 1
 		if (address == 0x4000u)
 		{
-			mPulse1Duty = val >> 6;
+			/*mPulse1Duty = val >> 6;
 			mPulse1LengthCounterFlag = IsBitOn(5, val);
 			mPulse1ConstantVolumeFlag = IsBitOn(4, val);
-			mPulse1VolumeDividerPeriod = val & 0x0F;
+			mPulse1VolumeDividerPeriod = val & 0x0F;*/
+
+			mPulse1.mDutyCycle = val >> 6;
+			mPulse1.mLengthCounter.mHaltFlag = IsBitOn(5, val);
 		}
 		if (address == 0x4001u)
 		{
-			mPulse1SweepFlag = IsBitOn(7, val);
+			/*mPulse1SweepFlag = IsBitOn(7, val);
 			mPulse1SweepDividerPeriod = (val >> 4) & 0x0E;
 			mPulse1SweepNegateFlag = IsBitOn(3, val);
-			mPulse1SweepShiftCounter = val & 0x0E;
+			mPulse1SweepShiftCounter = val & 0x0E;*/
 
 			// TODO set sweep reload flag
 
@@ -79,20 +67,66 @@ void APU_2A03::WriteRegister(ubyte val, ubyte2 address)
 		if (address == 0x4002u)
 		{
 			// Set low 8 bits of timer (timer is 11 bit)
-			mPulse1Timer = (mPulse1Timer & 0x0700) | ubyte2(val);
+			/*mPulse1Timer = (mPulse1Timer & 0x0700) | ubyte2(val);*/
+
+			mPulse1.mTimer = (mPulse1.mTimer & 0x0700) | ubyte2(val);
+
+			mPulse1.QueueWaveform();
 		}
 		if (address == 0x4003u)
 		{
 			// Set high 3 bits of timer (timer is 11 bit)
-			mPulse1Timer = (mPulse1Timer & 0x00FF) | (ubyte2(val & 0x7) << 8);
-			mPulse1LengthCounter = (val >> 3);
+			/*mPulse1Timer = (mPulse1Timer & 0x00FF) | (ubyte2(val & 0x7) << 8);
+			mPulse1LengthCounter = (val >> 3);*/
+
+			mPulse1.mTimer = (mPulse1.mTimer & 0x00FF) | (ubyte2(val & 0x7) << 8);
+			mPulse1.mLengthCounter.SetCounter(val >> 3);
+
+			mPulse1.QueueWaveform();
 
 			// TODO set envelope start flag
 		}
 	}
 	if (address < 0x4008u)
 	{
-		// Square 2
+		// Pulse 2
+		if (address == 0x4004u)
+		{
+			mPulse2.mDutyCycle = val >> 6;
+			mPulse2.mLengthCounter.mHaltFlag = IsBitOn(5, val);
+		}
+		if (address == 0x4005u)
+		{
+			/*mPulse1SweepFlag = IsBitOn(7, val);
+			mPulse1SweepDividerPeriod = (val >> 4) & 0x0E;
+			mPulse1SweepNegateFlag = IsBitOn(3, val);
+			mPulse1SweepShiftCounter = val & 0x0E;*/
+
+			// TODO set sweep reload flag
+
+		}
+		if (address == 0x4006u)
+		{
+			// Set low 8 bits of timer (timer is 11 bit)
+			/*mPulse1Timer = (mPulse1Timer & 0x0700) | ubyte2(val);*/
+
+			mPulse2.mTimer = (mPulse2.mTimer & 0x0700) | ubyte2(val);
+
+			mPulse2.QueueWaveform();
+		}
+		if (address == 0x4007u)
+		{
+			// Set high 3 bits of timer (timer is 11 bit)
+			/*mPulse1Timer = (mPulse1Timer & 0x00FF) | (ubyte2(val & 0x7) << 8);
+			mPulse1LengthCounter = (val >> 3);*/
+
+			mPulse2.mTimer = (mPulse2.mTimer & 0x00FF) | (ubyte2(val & 0x7) << 8);
+			mPulse2.mLengthCounter.SetCounter(val >> 3);
+
+			mPulse2.QueueWaveform();
+
+			// TODO set envelope start flag
+		}
 	}
 	if (address < 0x400Cu)
 	{
@@ -107,8 +141,18 @@ void APU_2A03::WriteRegister(ubyte val, ubyte2 address)
 		// DMC
 	}
 
+	if (address == 0x4015)
+	{
+		mPulse1.mLengthCounter.mEnabledFlag = IsBitOn(0, val);
+		mPulse2.mLengthCounter.mEnabledFlag = IsBitOn(1, val);
+
+		mPulse1.QueueWaveform();
+		mPulse2.QueueWaveform();
+	}
+
 	if (address == 0x4017)
 	{
+		mModeFlag = IsBitOn(7, val);
 		mInterruptFlag = IsBitOn(6, val);
 	}
 }
