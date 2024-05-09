@@ -26,3 +26,27 @@ private:
 	int mButtons[8] = {0x20, 'B', 'E', 'T', 'W', 'S', 'A', 'D'};
 };
 
+class Zapper
+{
+public:
+	Zapper(BUS& bus, DesktopWindow& window, class Graphics& gfx)
+		: Bus(bus), Window(window), Gfx(gfx)
+	{}
+	void Execute();
+	//CPU reads input state from controller
+	ubyte ReadCPU();
+	//CPU tells controller to start or stop polling
+	void WriteCPU(bool setStrobe);
+private:
+	BUS& Bus;
+	DesktopWindow& Window;
+	Graphics& Gfx;
+
+	//Dictates whether the controller is currently polling input or not
+	bool mPollFlag = false;
+	//bits: 0 = Serial for (vs.), 3 = Light Sensed (0 if light detected; 1 if not), 4 = Trigger pull (0 if fully released or pulled; 1 if half pulled)
+	unsigned int mInputState = 0;
+	unsigned int mPrevPixelValue = 0;
+	bool mPrevLDown = false;
+	bool mPrevRDown = false;
+};

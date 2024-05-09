@@ -32,6 +32,7 @@ public:
 	PPU_2C02* mpPPU = nullptr;
 	APU_2A03* mpAPU = nullptr;
 	Controller* mpController = nullptr;
+	Zapper* mpZapper = nullptr;
 	std::function<ubyte2(ubyte2)> Mirror;
 	//2KB onboard ram and rest of address space
 	std::array<ubyte, 0x0800u> mRAM = { 0 };

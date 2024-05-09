@@ -16,8 +16,10 @@ ubyte BUS::ReadCPU(ubyte2 address)
 	else if (address < 0x4018u)
 	{
 		//APU and I/O registers
-		if (address == 0x4016u || address == 0x4017u)
+		if (address == 0x4016u)
 			return mpController->ReadCPU();
+		if (address == 0x4017u)
+			return mpZapper->ReadCPU();
 	}
 	else if (address < 0x4020u)
 	{
@@ -72,7 +74,10 @@ void BUS::WriteCPU(ubyte val, ubyte2 address)
 		if (address == 0x4014u)
 			mpPPU->WriteOAMDMA(&mRAM[(unsigned int)val << 8u]);
 		else if (address == 0x4016u)
+		{
 			mpController->WriteCPU(val);
+			mpZapper->WriteCPU(val);
+		}
 		else
 			mpAPU->WriteRegister(val, address);
 	}

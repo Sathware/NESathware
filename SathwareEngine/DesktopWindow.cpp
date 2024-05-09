@@ -46,6 +46,10 @@ LRESULT DesktopWindow::EventHandler(UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
+	case WM_LBUTTONDOWN:
+		return 0;
+	case WM_LBUTTONUP:
+		return 0;
 	default:
 		return DefWindowProcW(m_windowHandle, message, wParam, lParam);
 	}
@@ -106,10 +110,27 @@ DesktopWindow::DesktopWindow(unsigned int clientWidth, unsigned int clientHeight
 
 bool DesktopWindow::KeyIsPressed(int virtualKeyCode)
 {
-	while (PeekMessageW(&m_windowsMessage, nullptr, 0, 0, PM_REMOVE | PM_QS_INPUT))
+	/*while (PeekMessageW(&m_windowsMessage, nullptr, 0, 0, PM_REMOVE | PM_QS_INPUT))
 	{
 		TranslateMessage(&m_windowsMessage);
 		DispatchMessageW(&m_windowsMessage);
-	}
-	return GetKeyState(virtualKeyCode) & 0x8000;
+	}*/
+	return GetAsyncKeyState(virtualKeyCode) & 0x8000;
+}
+
+vec2f DesktopWindow::GetMousePosition()
+{
+	/*while (PeekMessageW(&m_windowsMessage, nullptr, 0, 0, PM_REMOVE | PM_QS_INPUT))
+	{
+		TranslateMessage(&m_windowsMessage);
+		DispatchMessageW(&m_windowsMessage);
+	}*/
+	POINT temp(0, 0);
+	bool isSuccess = GetCursorPos(&temp);
+	isSuccess = ScreenToClient(m_windowHandle, &temp);
+
+	RECT clientRect(0, 0, 0, 0);
+	isSuccess = GetClientRect(m_windowHandle, &clientRect);
+
+	return { static_cast<float>(temp.x) / static_cast<float>(clientRect.right), static_cast<float>(temp.y) / static_cast<float>(clientRect.bottom) };
 }

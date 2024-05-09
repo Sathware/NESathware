@@ -22,6 +22,10 @@ public:
 	* Check if a Key is pressed given the Microsoft virtual key code
 	*/
 	bool KeyIsPressed(int virtualKeyCode);
+	/*
+	* Get the current mouse position in normalized client area coords
+	*/
+	vec2f GetMousePosition();
 
 	/*
 	* return:

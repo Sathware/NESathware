@@ -23,6 +23,14 @@ public:
 		frameImage[m_width * y + x] = c;
 	}
 
+	Color GetPixel(unsigned __int32 x, unsigned __int32 y)
+	{
+		assert(x >= 0 && x < m_width);
+		assert(y >= 0 && y < m_height);
+
+		return frameImage[m_width * y + x];
+	}
+
 	size_t m_width;
 	size_t m_height;
 

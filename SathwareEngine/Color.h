@@ -45,4 +45,24 @@ struct SathwareAPI Color
 		reinterpret_cast<__int8*>(&rgba)[3] = a;
 		//rgba |= (a << 24);
 	}
+
+	__int8 GetR() const
+	{
+		return reinterpret_cast<const __int8*>(&rgba)[0];
+	}
+	__int8 GetG() const
+	{
+		return reinterpret_cast<const __int8*>(&rgba)[1];
+		//rgba |= (g << 8);
+	}
+	__int8 GetB() const
+	{
+		return reinterpret_cast<const __int8*>(&rgba)[2];
+		//rgba |= (b << 16);
+	}
+	__int8 GetA() const
+	{
+		return reinterpret_cast<const __int8*>(&rgba)[3];
+		//rgba |= (a << 24);
+	}
 };

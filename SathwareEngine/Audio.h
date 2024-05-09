@@ -34,7 +34,7 @@ public:
 	}
 
 	// Queue audio sample buffer to be played
-	void QueueSoundData(const uint32_t numSamples, const std::vector<float>& data, bool loop);
+	void QueueSoundData(const uint32_t numSamples, const std::vector<float>& data, bool loop, const uint32_t loopBegin = 0, const uint32_t loopEnd = 0);
 
 	// Clear queued sample buffers except the buffer currently being played 
 	void ClearQueue()

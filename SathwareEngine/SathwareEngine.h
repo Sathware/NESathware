@@ -13,3 +13,8 @@
 #else
 #define ThrowIfFailed(result, string) 
 #endif
+
+struct vec2f
+{
+	float x, y;
+};

@@ -11,26 +11,28 @@ class NES
 {
 public:
 	NES(std::string romFileName, class Graphics& gfx, class Audio& audio, class DesktopWindow& window)
-		: mBus(), mCPU(mBus), mPPU(mBus, gfx), mAPU(mBus, audio), mController(mBus, window), mpCartridge(LoadRom(romFileName))
+		: mBus(), mCPU(mBus), mPPU(mBus, gfx), mAPU(mBus, audio), mController(mBus, window), mZapper(mBus, window, gfx), mpCartridge(LoadRom(romFileName))
 	{
 		mBus.mpCartridge = mpCartridge.get();
 		mBus.mpCPU = &mCPU;
 		mBus.mpPPU = &mPPU;
 		mBus.mpAPU = &mAPU;
 		mBus.mpController = &mController;
+		mBus.mpZapper = &mZapper;
 		mCPU.Reset();
 	}
 
 	void Run(float dt)
 	{
 		constexpr float timePerCPUCycle = 0.00000055873f;
-		if (dt > timePerCPUCycle)
-			dt = timePerCPUCycle;
+		/*if (dt > timePerCPUCycle)
+			dt = timePerCPUCycle;*/
 
 		for (; dt > 0; dt -= timePerCPUCycle)
 		{
 			//Poll user input
 			mController.Execute();
+			mZapper.Execute();
 			mCPU.Execute();
 			mAPU.Execute();
 			//3 PPU clock cycles = 1 CPU clock cycle
@@ -45,6 +47,7 @@ public:
 	PPU_2C02 mPPU;//NES Picture Processing Unit
 	APU_2A03 mAPU;//NES Audio Processing Unit
 	Controller mController;
+	Zapper mZapper;
 	std::unique_ptr<Mapper> mpCartridge;//NES Cartridge
 private:
 

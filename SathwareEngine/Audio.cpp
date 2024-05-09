@@ -125,7 +125,7 @@ SoundChannel::SoundChannel(ComPtr<IXAudio2>& XAudio2Interface)
 	ThrowIfFailed(result, L"Failed call to CreateSourceVoice to instantiate a source voice!");
 }
 
-void SoundChannel::QueueSoundData(const uint32_t numSamples, const std::vector<float>& data, bool loop)
+void SoundChannel::QueueSoundData(const uint32_t numSamples, const std::vector<float>& data, bool loop, const uint32_t loopBegin, const uint32_t loopEnd)
 {
 	// Specify new data to be queued for voice
 	XAUDIO2_BUFFER buffer = { 0 };
@@ -135,8 +135,8 @@ void SoundChannel::QueueSoundData(const uint32_t numSamples, const std::vector<f
 	buffer.PlayLength = numSamples;
 	if (loop)
 	{
-		buffer.LoopBegin = 0;
-		buffer.LoopLength = numSamples;
+		buffer.LoopBegin = loopBegin;
+		buffer.LoopLength = loopEnd - loopBegin;
 		buffer.LoopCount = XAUDIO2_LOOP_INFINITE;
 	}
 
